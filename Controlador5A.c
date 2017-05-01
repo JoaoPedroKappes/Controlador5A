@@ -110,7 +110,7 @@ void setup_Timer_1(){
      //A cada final de medicao, o timer e resetado para nao haver problemas de overflow
 }
 unsigned long long micros(){
-     return  (TMR1H <<8 | TMR1L)* TIMER1_CONST     //cada bit do timer 1 vale 0.5us
+     return  (TMR1H <<8 | TMR1L)* TIMER1_CONST     //cada bit do timer 1 vale 1us
              + n_interrupts_timer1*OVERFLOW_CONST; //numero de interrupcoes vezes o valor maximo do Timer 1 (2^16)
 }
 void setup_port(){
@@ -147,6 +147,13 @@ void setup_port(){
      TRISC5_bit = 0; //PWM OUTPUT(P1A)
      ANSELC  = 0x01; //RC0 analogico, ultimo bit do ANSELC.
      
+     /*** Interrupcoes e Captura ***/
+     GIE_bit    = 0X01;   //Habilita a interrupcao Global
+     PEIE_bit   = 0X01;   //Habilita a interrupcao por perifericos
+     CCP3IE_bit  = 0x01;  //Habilita interrupcoes do modulo CCP3(RADIO INPUT1)
+     CCP4IE_bit  = 0x01;  //Habilita interrupcoes do modulo CCP4(RADIO INPUT2)
+     CCP3CON     = 0x05;  //Configura captura por borda de subida
+     CCP4CON     = 0x05;  //Configura captura por borda de subida
 
      
 }
@@ -195,13 +202,45 @@ void interrupt()
     TMR1IF_bit = 0;          //Limpa a flag de interrupcao
     n_interrupts_timer1++;   //incrementa a flag do overflow do timer1
   }
+  
+   if(CCP3IF_bit && CCP3CON.B0)             //Interrupcao do modulo CCP3 e modo de captura configurado para borda de subida?
+  {                                        //Sim...
+    CCP3IF_bit  = 0x00;                    //Limpa a flag para nova captura
+    CCP3IE_bit  = 0x00;                    //Desabilita interrupcao do periferico CCP
+    CCP3CON     = 0x04;                    //Configura captura por borda de descida
+    t1_sig1     = micros();                //Guarda o valor do timer1 da primeira captura.
+    CCP3IE_bit  = 0x01;                    //Habilita interrupcao do periferico CCP
+  } //end if
+   else if(CCP3IF_bit)                      //Interrupcao do modulo CCP3?
+  {                                        //Sim...
+    CCP3IF_bit  = 0x00;                    //Limpa a flag para nova captura
+    CCP3IE_bit  = 0x00;                    //Desabilita interrupcao do periferico CCP
+    CCP3CON     = 0x05;                    //Configura captura por borda de subida
+    t2_sig1     = micros() - t1_sig1;      //Guarda o valor do timer1 da segunda captura.
+    CCP3IE_bit  = 0x01;                    //Habilita interrupcao do periferico CCP
+  } //end else
+
+   if(CCP4IF_bit && CCP4CON.B0)        //Interrupcao do modulo CCP4 e modo de captura configurado para borda de subida?
+  {                                        //Sim...
+    CCP4IF_bit  = 0x00;                    //Limpa a flag para nova captura
+    CCP4IE_bit  = 0x00;                    //Desabilita interrupcao do periferico CCP
+    CCP4CON     = 0x04;                    //Configura captura por borda de descida
+    t1_sig2     = micros();                //Guarda o valor do timer1 da primeira captura.
+    CCP4IE_bit  = 0x01;                    //Habilita interrupcao do periferico CCP
+  } //end if
+   else if(CCP4IF_bit)                      //Interrupcao do modulo CCP4?
+  {                                        //Sim...
+    CCP4IF_bit  = 0x00;                    //Limpa a flag para nova captura
+    CCP4IE_bit  = 0x00;                    //Desabilita interrupcao do periferico CCP
+    CCP4CON     = 0x05;                    //Configura captura por borda de subida
+    t2_sig2     = micros() - t1_sig2;      //Guarda o valor do timer1 da segunda captura.
+    CCP4IE_bit  = 0x01;                    //Habilita interrupcao do periferico CCP
+  } //end else  */
 } //end interrupt
 
 
 void main() {
    OSCCON = 0b01110010; //Coloca o oscillador interno a 8Mz
-   GIE_bit    = 0X01;   //Habilita a interrupcao Global
-   PEIE_bit   = 0X01;   //Habilita a interrupcao por perifericos
    setup_port();
    setup_pwms();
    setup_Timer_1();
@@ -212,16 +251,21 @@ void main() {
     char buffer[11];
     unsigned char dc;
     unsigned int i;
-    unsigned long long t;
+    /*unsigned long long t;
     i = 0;
     t = pulseIn1();
-    /*if(t< 1000)
+    if(t< 1000)
        t = 1000;
     if(t > 2000)
        t = 2000;
     rotateMotor1(t);*/
-    LongWordToStr(t, buffer);
-
+    UART1_write_text("Sinal 1: ");
+    LongWordToStr(t2_sig1, buffer);
+    UART1_write_text(buffer);
+    UART1_write_text("\t");
+    
+    UART1_write_text("Sinal 2: ");
+    LongWordToStr(t2_sig2, buffer);
     UART1_write_text(buffer);
     UART1_write_text("\n");
     delay_ms(10);

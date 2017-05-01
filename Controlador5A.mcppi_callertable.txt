@@ -4,10 +4,9 @@ main
 		UART1_Init
 	setup_pwms
 	setup_Timer_1
-	PulseIn1
-		micros
-	LongWordToStr
-		Div_32x32_U
 	UART1_Write_Text
 		UART1_Write
+	LongWordToStr
+		Div_32x32_U
 interrupt
+	micros

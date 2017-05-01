@@ -1,13 +1,5 @@
-#line 1 "D:/Back Up/doc/minerva boats/Controlador/Controlador Supelale/Software/Controlador5A/Controlador5A.c"
-
-
-
-
-
-
-
-
-
+#line 1 "D:/GitHub/Controlador5A/Controlador5A.c"
+#line 12 "D:/GitHub/Controlador5A/Controlador5A.c"
  unsigned long t1_sig1;
  unsigned long t2_sig1;
  unsigned long t1_sig2;
@@ -32,7 +24,7 @@ void setup_pwms(){
  PSTR1CON.B4 = 1;
  CCPR1L = 0b11111111;
  CCP1CON = 0b00111100;
-#line 47 "D:/Back Up/doc/minerva boats/Controlador/Controlador Supelale/Software/Controlador5A/Controlador5A.c"
+#line 49 "D:/GitHub/Controlador5A/Controlador5A.c"
  CCPTMRS.B3 = 0;
  CCPTMRS.B2 = 0;
 
@@ -135,6 +127,13 @@ void setup_port(){
  ANSELC = 0x01;
 
 
+ GIE_bit = 0X01;
+ PEIE_bit = 0X01;
+ CCP3IE_bit = 0x01;
+ CCP4IE_bit = 0x01;
+ CCP3CON = 0x05;
+ CCP4CON = 0x05;
+
 
 }
 unsigned long long PulseIn1(){
@@ -144,13 +143,11 @@ unsigned long long PulseIn1(){
  if((micros() - flag) >  100* 20000 )
  return 0;
  }
- flag = micros();
  while( RA2_bit  == 0){
  if((micros() - flag) >  100* 20000 )
  return 0;
  }
  t1_sig1 = micros();
- flag = t1_sig1;
  while( RA2_bit ){
  if((micros() - flag) >  100* 20000 )
  return 0;
@@ -184,13 +181,45 @@ void interrupt()
  TMR1IF_bit = 0;
  n_interrupts_timer1++;
  }
+
+ if(CCP3IF_bit && CCP3CON.B0)
+ {
+ CCP3IF_bit = 0x00;
+ CCP3IE_bit = 0x00;
+ CCP3CON = 0x04;
+ t1_sig1 = micros();
+ CCP3IE_bit = 0x01;
+ }
+ else if(CCP3IF_bit)
+ {
+ CCP3IF_bit = 0x00;
+ CCP3IE_bit = 0x00;
+ CCP3CON = 0x05;
+ t2_sig1 = micros() - t1_sig1;
+ CCP3IE_bit = 0x01;
+ }
+
+ if(CCP4IF_bit && CCP4CON.B0)
+ {
+ CCP4IF_bit = 0x00;
+ CCP4IE_bit = 0x00;
+ CCP4CON = 0x04;
+ t1_sig2 = micros();
+ CCP4IE_bit = 0x01;
+ }
+ else if(CCP4IF_bit)
+ {
+ CCP4IF_bit = 0x00;
+ CCP4IE_bit = 0x00;
+ CCP4CON = 0x05;
+ t2_sig2 = micros() - t1_sig2;
+ CCP4IE_bit = 0x01;
+ }
 }
 
 
 void main() {
  OSCCON = 0b01110010;
- GIE_bit = 0X01;
- PEIE_bit = 0X01;
  setup_port();
  setup_pwms();
  setup_Timer_1();
@@ -201,12 +230,14 @@ void main() {
  char buffer[11];
  unsigned char dc;
  unsigned int i;
- unsigned long long t;
- i = 0;
- t = pulseIn1();
-#line 223 "D:/Back Up/doc/minerva boats/Controlador/Controlador Supelale/Software/Controlador5A/Controlador5A.c"
- LongWordToStr(t, buffer);
+#line 262 "D:/GitHub/Controlador5A/Controlador5A.c"
+ UART1_write_text("Sinal 1: ");
+ LongWordToStr(t2_sig1, buffer);
+ UART1_write_text(buffer);
+ UART1_write_text("\t");
 
+ UART1_write_text("Sinal 2: ");
+ LongWordToStr(t2_sig2, buffer);
  UART1_write_text(buffer);
  UART1_write_text("\n");
  delay_ms(10);
