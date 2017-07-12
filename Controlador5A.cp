@@ -1,19 +1,10 @@
-#line 1 "D:/Back Up/doc/minerva boats/Controlador/Controlador Supelale/Software/Controlador5A/Controlador5A.c"
-
-
-
-
-
-
-
-
-
+#line 1 "D:/GitHub/Controlador5A/Controlador5A.c"
+#line 12 "D:/GitHub/Controlador5A/Controlador5A.c"
  unsigned long t1_sig1;
  unsigned long t2_sig1;
  unsigned long t1_sig2;
  unsigned long t2_sig2;
- unsigned int isMeasuring1 = 0;
- unsigned int isMeasuring2 = 0;
+ unsigned long last_measure;
  unsigned int n_interrupts_timer1 = 0;
 
 void setup_pwms(){
@@ -32,7 +23,7 @@ void setup_pwms(){
  PSTR1CON.B4 = 1;
  CCPR1L = 0b11111111;
  CCP1CON = 0b00111100;
-#line 47 "D:/Back Up/doc/minerva boats/Controlador/Controlador Supelale/Software/Controlador5A/Controlador5A.c"
+#line 48 "D:/GitHub/Controlador5A/Controlador5A.c"
  CCPTMRS.B3 = 0;
  CCPTMRS.B2 = 0;
 
@@ -115,6 +106,10 @@ void setup_port(){
  P2BSEL_bit = 1;
  CCP2SEL_bit = 1;
 
+ ANSELA = 0;
+ ANSELC = 0x01;
+ ADC_Init();
+
 
 
 
@@ -123,7 +118,7 @@ void setup_port(){
  TRISA3_bit = 1;
  TRISA4_bit = 0;
  TRISA5_bit = 0;
- ANSELA = 0;
+
 
 
  TRISC0_bit = 1;
@@ -132,11 +127,24 @@ void setup_port(){
  TRISC3_bit = 1;
  TRISC4_bit = 0;
  TRISC5_bit = 0;
- ANSELC = 0x01;
 
 
+
+ GIE_bit = 0X01;
+ PEIE_bit = 0X01;
+ CCP3IE_bit = 0x01;
+ CCP4IE_bit = 0x01;
+ CCP3CON = 0x05;
+ CCP4CON = 0x05;
 
 }
+
+unsigned failSafeCheck(){
+ if((micros() - last_measure) >  100* 20000  )
+ return 1;
+ return 0;
+}
+
 unsigned long long PulseIn1(){
  unsigned long long flag;
  flag = micros();
@@ -144,13 +152,11 @@ unsigned long long PulseIn1(){
  if((micros() - flag) >  100* 20000 )
  return 0;
  }
- flag = micros();
  while( RA2_bit  == 0){
  if((micros() - flag) >  100* 20000 )
  return 0;
  }
  t1_sig1 = micros();
- flag = t1_sig1;
  while( RA2_bit ){
  if((micros() - flag) >  100* 20000 )
  return 0;
@@ -177,6 +183,10 @@ void rotateMotor1(unsigned long long pulseWidth){
 
 }
 
+
+
+
+
 void interrupt()
 {
  if(TMR1IF_bit)
@@ -184,31 +194,71 @@ void interrupt()
  TMR1IF_bit = 0;
  n_interrupts_timer1++;
  }
+
+ if(CCP3IF_bit && CCP3CON.B0)
+ {
+ CCP3IF_bit = 0x00;
+ CCP3IE_bit = 0x00;
+ CCP3CON = 0x04;
+ t1_sig1 = micros();
+ CCP3IE_bit = 0x01;
+ }
+ else if(CCP3IF_bit)
+ {
+ CCP3IF_bit = 0x00;
+ CCP3IE_bit = 0x00;
+ CCP3CON = 0x05;
+ t2_sig1 = micros() - t1_sig1;
+ CCP3IE_bit = 0x01;
+ last_measure = micros();
+ }
+
+ if(CCP4IF_bit && CCP4CON.B0)
+ {
+ CCP4IF_bit = 0x00;
+ CCP4IE_bit = 0x00;
+ CCP4CON = 0x04;
+ t1_sig2 = micros();
+ CCP4IE_bit = 0x01;
+ }
+ else if(CCP4IF_bit)
+ {
+ CCP4IF_bit = 0x00;
+ CCP4IE_bit = 0x00;
+ CCP4CON = 0x05;
+ t2_sig2 = micros() - t1_sig2;
+ CCP4IE_bit = 0x01;
+ last_measure = micros();
+ }
 }
 
 
 void main() {
  OSCCON = 0b01110010;
- GIE_bit = 0X01;
- PEIE_bit = 0X01;
  setup_port();
  setup_pwms();
  setup_Timer_1();
 
-
+ pwm_steering(1,1);
+ pwm_steering(2,1);
+ set_duty_cycle(1, 127);
+ set_duty_cycle(2, 255);
  while(1){
  char *txt = "mikroe \n";
  char buffer[11];
  unsigned char dc;
  unsigned int i;
- unsigned long long t;
- i = 0;
- t = pulseIn1();
-#line 223 "D:/Back Up/doc/minerva boats/Controlador/Controlador Supelale/Software/Controlador5A/Controlador5A.c"
- LongWordToStr(t, buffer);
+ unsigned adc_value;
 
- UART1_write_text(buffer);
- UART1_write_text("\n");
- delay_ms(10);
+ set_duty_cycle(2,0);
+ pwm_steering(2,1);
+ set_duty_cycle(2, 255);
+ delay_ms(3000);
+
+ set_duty_cycle(2,0);
+ pwm_steering(2,2);
+ set_duty_cycle(2, 255);
+ delay_ms(3000);
+#line 311 "D:/GitHub/Controlador5A/Controlador5A.c"
  }
 }

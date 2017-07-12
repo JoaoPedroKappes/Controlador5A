@@ -614,6 +614,7 @@ expander_write_portab
 expander_write_portb
 f
 fabs
+failsafecheck
 ferr
 ferr_bit
 fixsign32
@@ -773,13 +774,12 @@ iscntrl
 isdigit
 isgraph
 islower
-ismeasuring1
-ismeasuring2
 ispunct
 isspace
 isupper
 isxdigit
 labs
+last_measure
 lata
 lata0
 lata0_bit

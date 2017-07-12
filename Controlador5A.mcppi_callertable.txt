@@ -2,12 +2,10 @@ main
 	__CC2DW
 	setup_port
 		UART1_Init
+		ADC_Init
 	setup_pwms
 	setup_Timer_1
-	PulseIn1
-		micros
-	LongWordToStr
-		Div_32x32_U
-	UART1_Write_Text
-		UART1_Write
+	pwm_steering
+	set_duty_cycle
 interrupt
+	micros
