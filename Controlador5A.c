@@ -6,15 +6,14 @@
  #define FAIL_SAFE_TIME   100*SIGNAL_PERIOD
  #define RADIO_IN1    RA2_bit
  #define RADIO_IN2    RC1_bit
- 
+ #define LOW_BAT      4 //adc channel AN4
  
  // --- Variaveis Globais ---
   unsigned long t1_sig1;           //tempo da subida do sinal 1
   unsigned long t2_sig1;           //tempo da descida do sinal 1
   unsigned long t1_sig2;           //tempo da subida do sinal 2
   unsigned long t2_sig2;           //tempo da descida do sinal 2
-  unsigned int isMeasuring1 = 0;   //variavel booleana para o reset do Timer1
-  unsigned int isMeasuring2 = 0;   //variavel booleana para o reset do Timer1
+  unsigned long last_measure;      //tempo da ultima medida de sinal
   unsigned int n_interrupts_timer1 = 0;//variavel que armazena o numero de estouros do timer1
  
 void setup_pwms(){
@@ -127,6 +126,10 @@ void setup_port(){
      /*** PWM ***/
      P2BSEL_bit =  1;    //P2BSEL: 1 = P2B function is on RA4
      CCP2SEL_bit =  1;   //CCP2SEL:1 = CCP2/P2A function is on RA5
+     /*** Analog ***/
+     ANSELA     = 0; //Nenhuma porta analogica
+     ANSELC  = 0x01; //RC0 analogico AN4, ultimo bit do ANSELC.
+     ADC_Init();     // Initialize ADC module with default settings
      
      //PINOS:
      /*** PORTA ***/
@@ -136,7 +139,7 @@ void setup_port(){
      TRISA3_bit = 1; //MLCR
      TRISA4_bit = 0; //PWM OUTPUT(P2B)
      TRISA5_bit = 0; //PWM OUTPUT(P2A)
-     ANSELA     = 0; //Nenhuma porta analogica
+
 
      /*** PORTC ***/
      TRISC0_bit = 1; //AN4 (LOW BATTERY)
@@ -145,7 +148,7 @@ void setup_port(){
      TRISC3_bit = 1; //ERROR FLAG1
      TRISC4_bit = 0; //PWM OUTPUT(P1B)
      TRISC5_bit = 0; //PWM OUTPUT(P1A)
-     ANSELC  = 0x01; //RC0 analogico, ultimo bit do ANSELC.
+
      
      /*** Interrupcoes e Captura ***/
      GIE_bit    = 0X01;   //Habilita a interrupcao Global
@@ -154,10 +157,16 @@ void setup_port(){
      CCP4IE_bit  = 0x01;  //Habilita interrupcoes do modulo CCP4(RADIO INPUT2)
      CCP3CON     = 0x05;  //Configura captura por borda de subida
      CCP4CON     = 0x05;  //Configura captura por borda de subida
-
      
 }
-unsigned long long PulseIn1(){
+
+unsigned failSafeCheck(){ //confere se ainda esta recebendo sinal
+  if((micros() - last_measure) > FAIL_SAFE_TIME )//compara o tempo do ultimo sinal recebido
+    return 1;
+  return 0;
+}
+
+unsigned long long PulseIn1(){  //funcao que calculava, via software, o pulso recebido
  unsigned long long flag;
  flag = micros();
  while(RADIO_IN1){   //garante que nao pegamos o sinal na metade, espera o sinal acabar para medi-lo de novo
@@ -177,24 +186,28 @@ unsigned long long PulseIn1(){
 
  return t1_sig1;
 }
-void rotateMotor1(unsigned long long pulseWidth){
-      unsigned int dc;
+void rotateMotor1(unsigned long long pulseWidth){  // funcao ainda nao testada
+      unsigned int dc;                             //intuito de mapear 1000us a 2000ms em -100% a 100% de rotacao
       dc = (pulseWidth-1000);
       if(pulseWidth >= 1500){
          dc = (dc - 500);
          dc = dc*255/500;
-         pwm_steering(1,1);
-         set_duty_cycle(1,dc);
+         pwm_steering(1,1);                        //coloca no sentido anti horario de rotacao
+         set_duty_cycle(1,dc);                     //aplica o duty cycle
       }
       if(pulseWidth < 1500){
          dc = (500 - dc);
          dc = dc*255/500;
-         pwm_steering(1,2);
-         set_duty_cycle(1,dc);
+         pwm_steering(1,2);                       //coloca no sentido horario de rotacao
+         set_duty_cycle(1,dc);                    //aplica o duty cycle
       }
 
 }
+
 // --- Rotina de Interrupcaoo ---
+// Temos 2 tipos de interrupcao, um pelo estouro do Timer1 e outra pelo modulo Capture
+// Estouro do timer 1: Usamos para compor a funcao micros, nada mais eh que uma contagem de tempo
+// Capture: Usamos para detectar as bordas de subida e descida e assim calcular a largura do pulso.
 void interrupt()
 {
    if(TMR1IF_bit)            //interrupcao pelo estouro do Timer1
@@ -203,7 +216,7 @@ void interrupt()
     n_interrupts_timer1++;   //incrementa a flag do overflow do timer1
   }
   
-   if(CCP3IF_bit && CCP3CON.B0)             //Interrupcao do modulo CCP3 e modo de captura configurado para borda de subida?
+   if(CCP3IF_bit && CCP3CON.B0)            //Interrupcao do modulo CCP3 e modo de captura configurado para borda de subida?
   {                                        //Sim...
     CCP3IF_bit  = 0x00;                    //Limpa a flag para nova captura
     CCP3IE_bit  = 0x00;                    //Desabilita interrupcao do periferico CCP
@@ -211,16 +224,17 @@ void interrupt()
     t1_sig1     = micros();                //Guarda o valor do timer1 da primeira captura.
     CCP3IE_bit  = 0x01;                    //Habilita interrupcao do periferico CCP
   } //end if
-   else if(CCP3IF_bit)                      //Interrupcao do modulo CCP3?
+   else if(CCP3IF_bit)                     //Interrupcao do modulo CCP3?
   {                                        //Sim...
     CCP3IF_bit  = 0x00;                    //Limpa a flag para nova captura
     CCP3IE_bit  = 0x00;                    //Desabilita interrupcao do periferico CCP
     CCP3CON     = 0x05;                    //Configura captura por borda de subida
     t2_sig1     = micros() - t1_sig1;      //Guarda o valor do timer1 da segunda captura.
     CCP3IE_bit  = 0x01;                    //Habilita interrupcao do periferico CCP
+    last_measure = micros();               //guarda o tempo da ultima medida para o controle fail safe
   } //end else
 
-   if(CCP4IF_bit && CCP4CON.B0)        //Interrupcao do modulo CCP4 e modo de captura configurado para borda de subida?
+   if(CCP4IF_bit && CCP4CON.B0)            //Interrupcao do modulo CCP4 e modo de captura configurado para borda de subida?
   {                                        //Sim...
     CCP4IF_bit  = 0x00;                    //Limpa a flag para nova captura
     CCP4IE_bit  = 0x00;                    //Desabilita interrupcao do periferico CCP
@@ -228,29 +242,44 @@ void interrupt()
     t1_sig2     = micros();                //Guarda o valor do timer1 da primeira captura.
     CCP4IE_bit  = 0x01;                    //Habilita interrupcao do periferico CCP
   } //end if
-   else if(CCP4IF_bit)                      //Interrupcao do modulo CCP4?
+   else if(CCP4IF_bit)                     //Interrupcao do modulo CCP4?
   {                                        //Sim...
     CCP4IF_bit  = 0x00;                    //Limpa a flag para nova captura
     CCP4IE_bit  = 0x00;                    //Desabilita interrupcao do periferico CCP
     CCP4CON     = 0x05;                    //Configura captura por borda de subida
     t2_sig2     = micros() - t1_sig2;      //Guarda o valor do timer1 da segunda captura.
     CCP4IE_bit  = 0x01;                    //Habilita interrupcao do periferico CCP
+    last_measure = micros();               //guarda o tempo da ultima medida para o controle fail safe
   } //end else  */
 } //end interrupt
 
 
 void main() {
-   OSCCON = 0b01110010; //Coloca o oscillador interno a 8Mz
+   OSCCON = 0b01110010; //Coloca o oscillador interno a 8Mz. NAO APAGAR ESSA LINHA (talvez muda-la pra dentro do setup_port)
    setup_port();
    setup_pwms();
    setup_Timer_1();
    //UART1_Write_Text("Start");
-
+   pwm_steering(1,1);
+   pwm_steering(2,1);
+   set_duty_cycle(1, 127);
+   set_duty_cycle(2, 255);
    while(1){
     char *txt = "mikroe \n";
     char buffer[11];
     unsigned char dc;
     unsigned int i;
+    unsigned adc_value;
+    
+    set_duty_cycle(2,0);
+    pwm_steering(2,1);
+    set_duty_cycle(2, 255);
+    delay_ms(3000);
+    
+    set_duty_cycle(2,0);
+    pwm_steering(2,2);
+    set_duty_cycle(2, 255);
+    delay_ms(3000);
     /*unsigned long long t;
     i = 0;
     t = pulseIn1();
@@ -258,7 +287,8 @@ void main() {
        t = 1000;
     if(t > 2000)
        t = 2000;
-    rotateMotor1(t);*/
+    rotateMotor1(t);
+    
     UART1_write_text("Sinal 1: ");
     LongWordToStr(t2_sig1, buffer);
     UART1_write_text(buffer);
@@ -267,7 +297,16 @@ void main() {
     UART1_write_text("Sinal 2: ");
     LongWordToStr(t2_sig2, buffer);
     UART1_write_text(buffer);
+    UART1_write_text("\t");
+
+
+    adc_value = ADC_Get_Sample(LOW_BAT);    // read analog value from ADC module channel 2
+    UART1_write_text("AD read: ");
+    WordToStr(adc_value, buffer);
+    UART1_write_text(buffer);
     UART1_write_text("\n");
     delay_ms(10);
+    */
+    
     }
 }
