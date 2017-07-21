@@ -337,6 +337,7 @@ c4tsel0
 c4tsel0_bit
 c4tsel1
 c4tsel1_bit
+calibration
 canspigetoperationmode
 canspiinitialize
 canspiread
@@ -595,6 +596,7 @@ eepgd_bit
 eeprom_read
 eeprom_write
 equals_double
+error_led_blink
 exp
 expander_init
 expander_init_advanced
@@ -824,6 +826,7 @@ longword2double
 longwordtohex
 longwordtostr
 longwordtostrwithzeros
+lower_8bits
 ltrim
 lwlo
 lwlo_bit
@@ -838,6 +841,7 @@ man_synchro
 manchester_0
 manchester_1
 manchester_out
+map
 max
 mc1out
 mc1out_bit
@@ -1131,6 +1135,7 @@ rcreg
 rcsta
 rd
 rd_bit
+read_eeprom_signals_data
 res032
 rotatemotor1
 rs485master_init
@@ -1713,6 +1718,7 @@ uart1_tx_idle
 uart1_write
 uart1_write_text
 uldiv
+upper_8bits
 vdelay_advanced_ms
 vdelay_ms
 w
