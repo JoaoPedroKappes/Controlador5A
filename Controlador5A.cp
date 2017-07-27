@@ -363,6 +363,22 @@ void read_eeprom_signals_data(){
  delay_ms(10);
 }
 
+void print_signal_received(){
+ char buffer[11];
+
+ UART1_write_text("Sinal 1: ");
+ LongWordToStr(t2_sig1, buffer);
+ UART1_write_text(buffer);
+ UART1_write_text("\t");
+
+ UART1_write_text("Sinal 2: ");
+ LongWordToStr(t2_sig2, buffer);
+ UART1_write_text(buffer);
+ UART1_write_text("\n");
+
+ delay_ms(100);
+}
+
 void main() {
  OSCCON = 0b01110010;
  setup_port();
@@ -376,7 +392,7 @@ void main() {
  delay_ms(1000);
  t2_sig2 = 20000;
  t2_sig1 = 20000;
- calibration();
+
  while(1){
  char *txt = "mikroe \n";
  char buffer[11];
@@ -385,8 +401,7 @@ void main() {
  unsigned adc_value;
  unsigned adc_value2;
 
- read_eeprom_signals_data();
- delay_ms(100);
-#line 471 "D:/GitHub/Controlador5A/Controlador5A.c"
+ print_signal_received();
+#line 486 "D:/GitHub/Controlador5A/Controlador5A.c"
  }
 }

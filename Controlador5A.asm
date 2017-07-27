@@ -1641,25 +1641,112 @@ L_end_read_eeprom_signals_data:
 	RETURN
 ; end of _read_eeprom_signals_data
 
-_main:
+_print_signal_received:
 
-;Controlador5A.c,397 :: 		void main() {
-;Controlador5A.c,398 :: 		OSCCON = 0b01110010; //Coloca o oscillador interno a 8Mz. NAO APAGAR ESSA LINHA (talvez muda-la pra dentro do setup_port)
-	MOVLW      114
-	MOVWF      OSCCON+0
-;Controlador5A.c,399 :: 		setup_port();
-	CALL       _setup_port+0
-;Controlador5A.c,400 :: 		setup_pwms();
-	CALL       _setup_pwms+0
-;Controlador5A.c,401 :: 		setup_Timer_1();
-	CALL       _setup_Timer_1+0
-;Controlador5A.c,402 :: 		UART1_Write_Text("Start");
+;Controlador5A.c,397 :: 		void print_signal_received(){
+;Controlador5A.c,400 :: 		UART1_write_text("Sinal 1: ");
 	MOVLW      ?lstr7_Controlador5A+0
 	MOVWF      FARG_UART1_Write_Text_uart_text+0
 	MOVLW      hi_addr(?lstr7_Controlador5A+0)
 	MOVWF      FARG_UART1_Write_Text_uart_text+1
 	CALL       _UART1_Write_Text+0
-;Controlador5A.c,403 :: 		pwm_steering(1,2);
+;Controlador5A.c,401 :: 		LongWordToStr(t2_sig1, buffer);
+	MOVF       _t2_sig1+0, 0
+	MOVWF      FARG_LongWordToStr_input+0
+	MOVF       _t2_sig1+1, 0
+	MOVWF      FARG_LongWordToStr_input+1
+	MOVF       _t2_sig1+2, 0
+	MOVWF      FARG_LongWordToStr_input+2
+	MOVF       _t2_sig1+3, 0
+	MOVWF      FARG_LongWordToStr_input+3
+	MOVLW      print_signal_received_buffer_L0+0
+	MOVWF      FARG_LongWordToStr_output+0
+	MOVLW      hi_addr(print_signal_received_buffer_L0+0)
+	MOVWF      FARG_LongWordToStr_output+1
+	CALL       _LongWordToStr+0
+;Controlador5A.c,402 :: 		UART1_write_text(buffer);
+	MOVLW      print_signal_received_buffer_L0+0
+	MOVWF      FARG_UART1_Write_Text_uart_text+0
+	MOVLW      hi_addr(print_signal_received_buffer_L0+0)
+	MOVWF      FARG_UART1_Write_Text_uart_text+1
+	CALL       _UART1_Write_Text+0
+;Controlador5A.c,403 :: 		UART1_write_text("\t");
+	MOVLW      ?lstr8_Controlador5A+0
+	MOVWF      FARG_UART1_Write_Text_uart_text+0
+	MOVLW      hi_addr(?lstr8_Controlador5A+0)
+	MOVWF      FARG_UART1_Write_Text_uart_text+1
+	CALL       _UART1_Write_Text+0
+;Controlador5A.c,405 :: 		UART1_write_text("Sinal 2: ");
+	MOVLW      ?lstr9_Controlador5A+0
+	MOVWF      FARG_UART1_Write_Text_uart_text+0
+	MOVLW      hi_addr(?lstr9_Controlador5A+0)
+	MOVWF      FARG_UART1_Write_Text_uart_text+1
+	CALL       _UART1_Write_Text+0
+;Controlador5A.c,406 :: 		LongWordToStr(t2_sig2, buffer);
+	MOVF       _t2_sig2+0, 0
+	MOVWF      FARG_LongWordToStr_input+0
+	MOVF       _t2_sig2+1, 0
+	MOVWF      FARG_LongWordToStr_input+1
+	MOVF       _t2_sig2+2, 0
+	MOVWF      FARG_LongWordToStr_input+2
+	MOVF       _t2_sig2+3, 0
+	MOVWF      FARG_LongWordToStr_input+3
+	MOVLW      print_signal_received_buffer_L0+0
+	MOVWF      FARG_LongWordToStr_output+0
+	MOVLW      hi_addr(print_signal_received_buffer_L0+0)
+	MOVWF      FARG_LongWordToStr_output+1
+	CALL       _LongWordToStr+0
+;Controlador5A.c,407 :: 		UART1_write_text(buffer);
+	MOVLW      print_signal_received_buffer_L0+0
+	MOVWF      FARG_UART1_Write_Text_uart_text+0
+	MOVLW      hi_addr(print_signal_received_buffer_L0+0)
+	MOVWF      FARG_UART1_Write_Text_uart_text+1
+	CALL       _UART1_Write_Text+0
+;Controlador5A.c,408 :: 		UART1_write_text("\n");
+	MOVLW      ?lstr10_Controlador5A+0
+	MOVWF      FARG_UART1_Write_Text_uart_text+0
+	MOVLW      hi_addr(?lstr10_Controlador5A+0)
+	MOVWF      FARG_UART1_Write_Text_uart_text+1
+	CALL       _UART1_Write_Text+0
+;Controlador5A.c,410 :: 		delay_ms(100);
+	MOVLW      2
+	MOVWF      R11
+	MOVLW      4
+	MOVWF      R12
+	MOVLW      186
+	MOVWF      R13
+L_print_signal_received55:
+	DECFSZ     R13, 1
+	GOTO       L_print_signal_received55
+	DECFSZ     R12, 1
+	GOTO       L_print_signal_received55
+	DECFSZ     R11, 1
+	GOTO       L_print_signal_received55
+	NOP
+;Controlador5A.c,411 :: 		}
+L_end_print_signal_received:
+	RETURN
+; end of _print_signal_received
+
+_main:
+
+;Controlador5A.c,413 :: 		void main() {
+;Controlador5A.c,414 :: 		OSCCON = 0b01110010; //Coloca o oscillador interno a 8Mz. NAO APAGAR ESSA LINHA (talvez muda-la pra dentro do setup_port)
+	MOVLW      114
+	MOVWF      OSCCON+0
+;Controlador5A.c,415 :: 		setup_port();
+	CALL       _setup_port+0
+;Controlador5A.c,416 :: 		setup_pwms();
+	CALL       _setup_pwms+0
+;Controlador5A.c,417 :: 		setup_Timer_1();
+	CALL       _setup_Timer_1+0
+;Controlador5A.c,418 :: 		UART1_Write_Text("Start");
+	MOVLW      ?lstr11_Controlador5A+0
+	MOVWF      FARG_UART1_Write_Text_uart_text+0
+	MOVLW      hi_addr(?lstr11_Controlador5A+0)
+	MOVWF      FARG_UART1_Write_Text_uart_text+1
+	CALL       _UART1_Write_Text+0
+;Controlador5A.c,419 :: 		pwm_steering(1,2);
 	MOVLW      1
 	MOVWF      FARG_pwm_steering_channel+0
 	MOVLW      0
@@ -1669,7 +1756,7 @@ _main:
 	MOVLW      0
 	MOVWF      FARG_pwm_steering_port+1
 	CALL       _pwm_steering+0
-;Controlador5A.c,404 :: 		pwm_steering(2,2);
+;Controlador5A.c,420 :: 		pwm_steering(2,2);
 	MOVLW      2
 	MOVWF      FARG_pwm_steering_channel+0
 	MOVLW      0
@@ -1679,7 +1766,7 @@ _main:
 	MOVLW      0
 	MOVWF      FARG_pwm_steering_port+1
 	CALL       _pwm_steering+0
-;Controlador5A.c,405 :: 		set_duty_cycle(1, 0);
+;Controlador5A.c,421 :: 		set_duty_cycle(1, 0);
 	MOVLW      1
 	MOVWF      FARG_set_duty_cycle_channel+0
 	MOVLW      0
@@ -1687,7 +1774,7 @@ _main:
 	CLRF       FARG_set_duty_cycle_duty+0
 	CLRF       FARG_set_duty_cycle_duty+1
 	CALL       _set_duty_cycle+0
-;Controlador5A.c,406 :: 		set_duty_cycle(2, 255);
+;Controlador5A.c,422 :: 		set_duty_cycle(2, 255);
 	MOVLW      2
 	MOVWF      FARG_set_duty_cycle_channel+0
 	MOVLW      0
@@ -1696,61 +1783,44 @@ _main:
 	MOVWF      FARG_set_duty_cycle_duty+0
 	CLRF       FARG_set_duty_cycle_duty+1
 	CALL       _set_duty_cycle+0
-;Controlador5A.c,407 :: 		delay_ms(1000);
+;Controlador5A.c,423 :: 		delay_ms(1000);
 	MOVLW      11
 	MOVWF      R11
 	MOVLW      38
 	MOVWF      R12
 	MOVLW      93
 	MOVWF      R13
-L_main55:
+L_main56:
 	DECFSZ     R13, 1
-	GOTO       L_main55
+	GOTO       L_main56
 	DECFSZ     R12, 1
-	GOTO       L_main55
+	GOTO       L_main56
 	DECFSZ     R11, 1
-	GOTO       L_main55
+	GOTO       L_main56
 	NOP
 	NOP
-;Controlador5A.c,408 :: 		t2_sig2 = 20000;
+;Controlador5A.c,424 :: 		t2_sig2 = 20000;
 	MOVLW      32
 	MOVWF      _t2_sig2+0
 	MOVLW      78
 	MOVWF      _t2_sig2+1
 	CLRF       _t2_sig2+2
 	CLRF       _t2_sig2+3
-;Controlador5A.c,409 :: 		t2_sig1 = 20000;
+;Controlador5A.c,425 :: 		t2_sig1 = 20000;
 	MOVLW      32
 	MOVWF      _t2_sig1+0
 	MOVLW      78
 	MOVWF      _t2_sig1+1
 	CLRF       _t2_sig1+2
 	CLRF       _t2_sig1+3
-;Controlador5A.c,410 :: 		calibration();
-	CALL       _calibration+0
-;Controlador5A.c,411 :: 		while(1){
-L_main56:
-;Controlador5A.c,412 :: 		char *txt = "mikroe \n";
-;Controlador5A.c,419 :: 		read_eeprom_signals_data();
-	CALL       _read_eeprom_signals_data+0
-;Controlador5A.c,420 :: 		delay_ms(100);
-	MOVLW      2
-	MOVWF      R11
-	MOVLW      4
-	MOVWF      R12
-	MOVLW      186
-	MOVWF      R13
-L_main58:
-	DECFSZ     R13, 1
-	GOTO       L_main58
-	DECFSZ     R12, 1
-	GOTO       L_main58
-	DECFSZ     R11, 1
-	GOTO       L_main58
-	NOP
-;Controlador5A.c,471 :: 		}
-	GOTO       L_main56
-;Controlador5A.c,472 :: 		}
+;Controlador5A.c,427 :: 		while(1){
+L_main57:
+;Controlador5A.c,428 :: 		char *txt = "mikroe \n";
+;Controlador5A.c,435 :: 		print_signal_received();
+	CALL       _print_signal_received+0
+;Controlador5A.c,486 :: 		}
+	GOTO       L_main57
+;Controlador5A.c,487 :: 		}
 L_end_main:
 	GOTO       $+0
 ; end of _main

@@ -9,16 +9,10 @@ main
 		UART1_Write
 	pwm_steering
 	set_duty_cycle
-	calibration
-		micros
-		EEPROM_Write
-		error_led_blink
-			Div_16x16_U
-	read_eeprom_signals_data
+	print_signal_received
 		UART1_Write_Text
 			UART1_Write
-		EEPROM_Read
-		WordToStr
-			Div_16x16_U
+		LongWordToStr
+			Div_32x32_U
 interrupt
 	micros

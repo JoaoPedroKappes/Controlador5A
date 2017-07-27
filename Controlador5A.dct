@@ -1032,6 +1032,7 @@ pow
 pr2
 pr4
 pr6
+print_signal_received
 ps0
 ps0_bit
 ps1
