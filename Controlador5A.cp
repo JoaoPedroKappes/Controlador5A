@@ -1,5 +1,5 @@
 #line 1 "D:/GitHub/Controlador5A/Controlador5A.c"
-#line 22 "D:/GitHub/Controlador5A/Controlador5A.c"
+#line 28 "D:/GitHub/Controlador5A/Controlador5A.c"
  unsigned long t1_sig1;
  unsigned long t2_sig1;
  unsigned long t1_sig2;
@@ -25,7 +25,7 @@ void setup_pwms(){
  PSTR1CON.B4 = 1;
  CCPR1L = 0b11111111;
  CCP1CON = 0b00111100;
-#line 60 "D:/GitHub/Controlador5A/Controlador5A.c"
+#line 66 "D:/GitHub/Controlador5A/Controlador5A.c"
  CCPTMRS.B3 = 0;
  CCPTMRS.B2 = 0;
 
@@ -177,7 +177,32 @@ long map(long x, long in_min, long in_max, long out_min, long out_max)
 {
  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
+void rotateMotor(){
+ int duty_cycle;
+ unsigned int pulseWidth;
+ pulseWidth = t2_sig1;
 
+
+ if(pulseWidth <  1004 )
+ pulseWidth =  1004 ;
+ if(pulseWidth >  1927 )
+ pulseWidth =  1927 ;
+
+
+ duty_cycle = map(pulseWidth, 1004 , 1927 , -255 , 255 );
+
+ if(duty_cycle >= 0){
+ pwm_steering(1,1);
+ set_duty_cycle(1,duty_cycle);
+ }
+ else{
+ duty_cycle = -duty_cycle;
+ pwm_steering(1,2);
+ set_duty_cycle(1,duty_cycle);
+ }
+
+
+}
 void rotateMotor1(unsigned long long pulseWidth){
  unsigned int dc;
  dc = (pulseWidth-1000);
@@ -402,6 +427,6 @@ void main() {
  unsigned adc_value2;
 
  print_signal_received();
-#line 486 "D:/GitHub/Controlador5A/Controlador5A.c"
+#line 517 "D:/GitHub/Controlador5A/Controlador5A.c"
  }
 }

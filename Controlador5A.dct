@@ -1138,6 +1138,7 @@ rd
 rd_bit
 read_eeprom_signals_data
 res032
+rotatemotor
 rotatemotor1
 rs485master_init
 rs485master_receive

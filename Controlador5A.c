@@ -10,6 +10,12 @@
  #define ERROR_LED    RA1_bit
  #define LOW_BAT      4 //adc channel AN4
  
+ #define MAX_CH_DURATION   1927
+ #define MIN_CH_DURATION   1004
+ #define MAX_PWM           255
+ #define MIN_PWM           -255
+ 
+ 
  // PWMS
 
  #define P1A          RC5_bit
@@ -208,7 +214,32 @@ long map(long x, long in_min, long in_max, long out_min, long out_max)
 {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
+void rotateMotor(){
+    int duty_cycle;
+    unsigned int pulseWidth;
+    pulseWidth = t2_sig1;   //le o pulso do canal 1
+    
+    // Tratamento de erro, para nao exceder os valores maximos;
+    if(pulseWidth < MIN_CH_DURATION)
+       pulseWidth = MIN_CH_DURATION;
+    if(pulseWidth > MAX_CH_DURATION)
+       pulseWidth = MAX_CH_DURATION;
+       
+    //Mapear 1000us a 2000ms em -100% a 100% de rotacao
+    duty_cycle = map(pulseWidth,MIN_CH_DURATION,MAX_CH_DURATION,MIN_PWM,MAX_PWM);
+    
+    if(duty_cycle >= 0){
+      pwm_steering(1,1);                        //coloca no sentido anti horario de rotacao
+      set_duty_cycle(1,duty_cycle);                     //aplica o duty cycle
+    }
+    else{
+      duty_cycle = -duty_cycle;
+      pwm_steering(1,2);                       //coloca no sentido horario de rotacao
+      set_duty_cycle(1,duty_cycle);            //aplica o duty cycle
+    }
 
+
+}
 void rotateMotor1(unsigned long long pulseWidth){  // funcao ainda nao testada
       unsigned int dc;                             //intuito de mapear 1000us a 2000ms em -100% a 100% de rotacao
       dc = (pulseWidth-1000);
