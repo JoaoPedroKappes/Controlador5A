@@ -33,11 +33,10 @@ Count=0
 [OTHER_FILES]
 Count=0
 [SEARCH_PATH]
-Count=4
-Path0=D:\Program Files\mikroC PRO for PIC\defs\
-Path1=D:\Program Files\mikroC PRO for PIC\Uses\P16_Enh\
-Path2=D:\GitHub\Controlador5A\
-Path3=D:\Back Up\doc\minerva boats\Controlador\Controlador Supelale\Software\Controlador5A\
+Count=3
+Path0=C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for PIC\Defs\
+Path1=C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for PIC\Uses\P16_Enh\
+Path2=C:\Users\Samsung\Desktop\MinervaBots\Projetos\Controlador\Controlador 2017.2\Controlador 5A\Projeto de software\Controlador5A-master\Controlador5A-master\
 [HEADER_PATH]
 Count=0
 [HEADERS]
@@ -83,6 +82,5 @@ File33=Sprintl
 File34=Time
 File35=Trigonometry
 File36=UART
-[EXPANDED NODES]
-Node1=Sources
-Count=1
+[EXPANDED_NODES]
+Count=0

@@ -9,10 +9,15 @@ main
 		UART1_Write
 	pwm_steering
 	set_duty_cycle
-	print_signal_received
-		UART1_Write_Text
-			UART1_Write
-		LongWordToStr
-			Div_32x32_U
+	failSafeCheck
+		micros
+	rotateMotor
+		map
+			Mul_32x32_U
+			Div_32x32_S
+				SDIV3232L
+				COMFREM
+		pwm_steering
+		set_duty_cycle
 interrupt
 	micros

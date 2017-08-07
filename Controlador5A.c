@@ -10,10 +10,12 @@
  #define ERROR_LED    RA1_bit
  #define LOW_BAT      4 //adc channel AN4
  
- #define MAX_CH_DURATION   1927
- #define MIN_CH_DURATION   1004
+ #define MAX_CH_DURATION   1900
+ #define MIN_CH_DURATION   1100
  #define MAX_PWM           255
  #define MIN_PWM           -255
+ #define DEADZONE          50
+ #define MEAN_CH_DURATION  (MIN_CH_DURATION + MAX_CH_DURATION)/2
  
  
  // PWMS
@@ -212,34 +214,59 @@ unsigned long long PulseIn1(){  //funcao que calculava, via software, o pulso re
 // funcao para mapear o sinal recebido para pwm
 long map(long x, long in_min, long in_max, long out_min, long out_max)
 {
-  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+  return ((x - in_min) * (out_max - out_min) / (in_max - in_min)) + out_min;
 }
 void rotateMotor(){
-    int duty_cycle;
-    unsigned int pulseWidth;
-    pulseWidth = t2_sig1;   //le o pulso do canal 1
+    int duty_cycle1;
+    int duty_cycle2;
+    unsigned int pulseWidth1;
+    unsigned int pulseWidth2;
+    pulseWidth1 = t2_sig1;   //lê o pulso do canal 1
+    pulseWidth2 = t2_sig2;   //lê o pulso do canal 2
     
     // Tratamento de erro, para nao exceder os valores maximos;
-    if(pulseWidth < MIN_CH_DURATION)
-       pulseWidth = MIN_CH_DURATION;
-    if(pulseWidth > MAX_CH_DURATION)
-       pulseWidth = MAX_CH_DURATION;
+    if(pulseWidth1 < MIN_CH_DURATION)
+       pulseWidth1 = MIN_CH_DURATION;
+    if(pulseWidth1 > MAX_CH_DURATION)
+       pulseWidth1 = MAX_CH_DURATION;
+
+    if(pulseWidth2 < MIN_CH_DURATION)
+       pulseWidth2 = MIN_CH_DURATION;
+    if(pulseWidth2 > MAX_CH_DURATION)
+       pulseWidth2 = MAX_CH_DURATION;
        
-    //Mapear 1000us a 2000ms em -100% a 100% de rotacao
-    duty_cycle = map(pulseWidth,MIN_CH_DURATION,MAX_CH_DURATION,MIN_PWM,MAX_PWM);
+    //implementa uma zona morta, para evitar variações no valor de referência
+    if((pulseWidth1 < (MEAN_CH_DURATION + DEADZONE)) && (pulseWidth1 > (MEAN_CH_DURATION - DEADZONE)))
+       pulseWidth1 = MEAN_CH_DURATION;
+       
+    if((pulseWidth2 < (MEAN_CH_DURATION + DEADZONE)) && (pulseWidth2 > (MEAN_CH_DURATION - DEADZONE)))
+       pulseWidth2 = MEAN_CH_DURATION;
+       
+    //Mapear 1100us a 1900ms em -100% a 100% de rotacao
+    duty_cycle1 = map(pulseWidth1,MIN_CH_DURATION,MAX_CH_DURATION,MIN_PWM,MAX_PWM);
+    duty_cycle2 = map(pulseWidth2,MIN_CH_DURATION,MAX_CH_DURATION,MIN_PWM,MAX_PWM);
     
-    if(duty_cycle >= 0){
-      pwm_steering(1,1);                        //coloca no sentido anti horario de rotacao
-      set_duty_cycle(1,duty_cycle);                     //aplica o duty cycle
+    if(duty_cycle1 >= 0){
+      pwm_steering(1,2);                        //coloca no sentido anti horario de rotacao
+      set_duty_cycle(1,duty_cycle1);                     //aplica o duty cycle
     }
     else{
-      duty_cycle = -duty_cycle;
-      pwm_steering(1,2);                       //coloca no sentido horario de rotacao
-      set_duty_cycle(1,duty_cycle);            //aplica o duty cycle
+      duty_cycle1 = -duty_cycle1;
+      pwm_steering(1,1);                       //coloca no sentido horario de rotacao
+      set_duty_cycle(1,duty_cycle1);            //aplica o duty cycle
     }
 
-
+    if(duty_cycle2 >= 0){
+      pwm_steering(2,2);                        //coloca no sentido anti horario de rotacao
+      set_duty_cycle(2,duty_cycle2);                     //aplica o duty cycle
+    }
+    else{
+      duty_cycle2 = -duty_cycle2;
+      pwm_steering(2,1);                       //coloca no sentido horario de rotacao
+      set_duty_cycle(2,duty_cycle2);            //aplica o duty cycle
+    }
 }
+
 void rotateMotor1(unsigned long long pulseWidth){  // funcao ainda nao testada
       unsigned int dc;                             //intuito de mapear 1000us a 2000ms em -100% a 100% de rotacao
       dc = (pulseWidth-1000);
@@ -463,7 +490,14 @@ void main() {
     unsigned adc_value;
     unsigned adc_value2;
     
-    print_signal_received();
+    if (failSafeCheck()) {
+       set_duty_cycle(1, 0);
+       set_duty_cycle(2, 0);
+    }
+    else {
+         rotateMotor();
+    }
+    //print_signal_received();
     /*
     if(CALIB_BUTTON == 0){
       UART1_Write_Text("LIGOU\n");
@@ -494,7 +528,7 @@ void main() {
     if(t > 2000)
        t = 2000;
     rotateMotor1(t);
-    
+
     UART1_write_text("Sinal 1: ");
     LongWordToStr(t2_sig1, buffer);
     UART1_write_text(buffer);
