@@ -812,6 +812,8 @@ isspace
 isupper
 isxdigit
 labs
+last_duty_cycle1
+last_duty_cycle2
 last_measure
 lata
 lata0
@@ -1172,7 +1174,6 @@ rd_bit
 read_eeprom_signals_data
 res032
 rotatemotor
-rotatemotor1
 rs485master_init
 rs485master_receive
 rs485master_send

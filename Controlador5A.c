@@ -14,8 +14,8 @@
  #define MIN_CH_DURATION   1100
  #define MAX_PWM           255
  #define MIN_PWM           -255
- #define DEADZONE          50
- #define MEAN_CH_DURATION  (MIN_CH_DURATION + MAX_CH_DURATION)/2
+ #define DEADZONE          30
+ #define MEAN_CH_DURATION  1500 //(MIN_CH_DURATION + MAX_CH_DURATION)/2
  
  
  // PWMS
@@ -35,6 +35,9 @@
   unsigned int n_interrupts_timer1 = 0;//variavel que armazena o numero de estouros do timer1
   unsigned short  lower_8bits;     //variaveis utilizadas para armazenamento de uma variavel 16bits
   unsigned short  upper_8bits;     //em dois enderecos de memoria 8 bits
+  
+  unsigned long last_duty_cycle1 = 0;//duas variáveis usadas para corrigir o bug de imprecisão na leitura
+  unsigned long last_duty_cycle2 = 0;//do sinal proveniente do receptor
   
 void setup_pwms(){
    T2CON = 0;   //desliga o Timer2, timer responsavel pelos PWMS
@@ -224,7 +227,7 @@ void rotateMotor(){
     pulseWidth1 = t2_sig1;   //lê o pulso do canal 1
     pulseWidth2 = t2_sig2;   //lê o pulso do canal 2
     
-    // Tratamento de erro, para nao exceder os valores maximos;
+    // Tratamento de erro, para nao exceder os valores maximos e mínimos;
     if(pulseWidth1 < MIN_CH_DURATION)
        pulseWidth1 = MIN_CH_DURATION;
     if(pulseWidth1 > MAX_CH_DURATION)
@@ -235,7 +238,13 @@ void rotateMotor(){
     if(pulseWidth2 > MAX_CH_DURATION)
        pulseWidth2 = MAX_CH_DURATION;
        
-    //implementa uma zona morta, para evitar variações no valor de referência
+    // Tratamento de erro para se exceder muito os valores máximo, parar (bug receptor HK)
+    if(pulseWidth1 > MAX_CH_DURATION*2)
+       pulseWidth1 = MEAN_CH_DURATION;
+    if(pulseWidth2 > MAX_CH_DURATION*2)
+       pulseWidth2 = MEAN_CH_DURATION;
+       
+    //implementa uma zona morta, para evitar variações na leitura do valor de referência
     if((pulseWidth1 < (MEAN_CH_DURATION + DEADZONE)) && (pulseWidth1 > (MEAN_CH_DURATION - DEADZONE)))
        pulseWidth1 = MEAN_CH_DURATION;
        
@@ -246,28 +255,41 @@ void rotateMotor(){
     duty_cycle1 = map(pulseWidth1,MIN_CH_DURATION,MAX_CH_DURATION,MIN_PWM,MAX_PWM);
     duty_cycle2 = map(pulseWidth2,MIN_CH_DURATION,MAX_CH_DURATION,MIN_PWM,MAX_PWM);
     
+    //tratamento de erro para pulsos espasmáticos
+    if(duty_cycle1 && last_duty_cycle1) {
+      unsigned long start = micros();
+      while(micros() - start < MAX_CH_DURATION){}
+    }
+    last_duty_cycle1 = duty_cycle1;
+    
+    if(duty_cycle2 && last_duty_cycle2) {
+      long start = micros();
+      while(micros() - start < MAX_CH_DURATION){}
+    }
+    last_duty_cycle2 = duty_cycle1;
+    
     if(duty_cycle1 >= 0){
-      pwm_steering(1,2);                        //coloca no sentido anti horario de rotacao
+      pwm_steering(1,1);                        //coloca no sentido anti horario de rotacao
       set_duty_cycle(1,duty_cycle1);                     //aplica o duty cycle
     }
     else{
       duty_cycle1 = -duty_cycle1;
-      pwm_steering(1,1);                       //coloca no sentido horario de rotacao
+      pwm_steering(1,2);                       //coloca no sentido horario de rotacao
       set_duty_cycle(1,duty_cycle1);            //aplica o duty cycle
     }
 
     if(duty_cycle2 >= 0){
-      pwm_steering(2,2);                        //coloca no sentido anti horario de rotacao
+      pwm_steering(2,1);                        //coloca no sentido anti horario de rotacao
       set_duty_cycle(2,duty_cycle2);                     //aplica o duty cycle
     }
     else{
       duty_cycle2 = -duty_cycle2;
-      pwm_steering(2,1);                       //coloca no sentido horario de rotacao
+      pwm_steering(2,2);                       //coloca no sentido horario de rotacao
       set_duty_cycle(2,duty_cycle2);            //aplica o duty cycle
     }
 }
 
-void rotateMotor1(unsigned long long pulseWidth){  // funcao ainda nao testada
+/*void rotateMotor1(unsigned long long pulseWidth){  // funcao ainda nao testada
       unsigned int dc;                             //intuito de mapear 1000us a 2000ms em -100% a 100% de rotacao
       dc = (pulseWidth-1000);
       if(pulseWidth >= 1500){
@@ -283,7 +305,7 @@ void rotateMotor1(unsigned long long pulseWidth){  // funcao ainda nao testada
          set_duty_cycle(1,dc);                    //aplica o duty cycle
       }
 
-}
+}   */
 
 // --- Rotina de Interrupcaoo ---
 // Temos 2 tipos de interrupcao, um pelo estouro do Timer1 e outra pelo modulo Capture
@@ -489,7 +511,7 @@ void main() {
     unsigned int i;
     unsigned adc_value;
     unsigned adc_value2;
-    
+
     if (failSafeCheck()) {
        set_duty_cycle(1, 0);
        set_duty_cycle(2, 0);

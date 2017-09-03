@@ -1,5 +1,5 @@
-#line 1 "C:/Users/Samsung/Desktop/MinervaBots/Projetos/Controlador/Controlador 2017.2/Controlador 5A/Projeto de software/Controlador5A-master/Controlador5A-master/Controlador5A.c"
-#line 30 "C:/Users/Samsung/Desktop/MinervaBots/Projetos/Controlador/Controlador 2017.2/Controlador 5A/Projeto de software/Controlador5A-master/Controlador5A-master/Controlador5A.c"
+#line 1 "C:/Users/Samsung/Desktop/MinervaBots/Projetos/Controlador/Controlador 2017.2/Controlador 5A/Projeto de software/Controlador5A/Controlador5A.c"
+#line 30 "C:/Users/Samsung/Desktop/MinervaBots/Projetos/Controlador/Controlador 2017.2/Controlador 5A/Projeto de software/Controlador5A/Controlador5A.c"
  unsigned long t1_sig1;
  unsigned long t2_sig1;
  unsigned long t1_sig2;
@@ -8,6 +8,9 @@
  unsigned int n_interrupts_timer1 = 0;
  unsigned short lower_8bits;
  unsigned short upper_8bits;
+
+ unsigned long last_duty_cycle1 = 0;
+ unsigned long last_duty_cycle2 = 0;
 
 void setup_pwms(){
  T2CON = 0;
@@ -25,7 +28,7 @@ void setup_pwms(){
  PSTR1CON.B4 = 1;
  CCPR1L = 0b11111111;
  CCP1CON = 0b00111100;
-#line 68 "C:/Users/Samsung/Desktop/MinervaBots/Projetos/Controlador/Controlador 2017.2/Controlador 5A/Projeto de software/Controlador5A-master/Controlador5A-master/Controlador5A.c"
+#line 71 "C:/Users/Samsung/Desktop/MinervaBots/Projetos/Controlador/Controlador 2017.2/Controlador 5A/Projeto de software/Controlador5A/Controlador5A.c"
  CCPTMRS.B3 = 0;
  CCPTMRS.B2 = 0;
 
@@ -197,59 +200,56 @@ void rotateMotor(){
  pulseWidth2 =  1900 ;
 
 
- if((pulseWidth1 < ( ( 1100  + 1900 )/2  +  50 )) && (pulseWidth1 > ( ( 1100  + 1900 )/2  -  50 )))
- pulseWidth1 =  ( 1100  + 1900 )/2 ;
+ if(pulseWidth1 >  1900 *2)
+ pulseWidth1 =  1500 ;
+ if(pulseWidth2 >  1900 *2)
+ pulseWidth2 =  1500 ;
 
- if((pulseWidth2 < ( ( 1100  + 1900 )/2  +  50 )) && (pulseWidth2 > ( ( 1100  + 1900 )/2  -  50 )))
- pulseWidth2 =  ( 1100  + 1900 )/2 ;
+
+ if((pulseWidth1 < ( 1500  +  30 )) && (pulseWidth1 > ( 1500  -  30 )))
+ pulseWidth1 =  1500 ;
+
+ if((pulseWidth2 < ( 1500  +  30 )) && (pulseWidth2 > ( 1500  -  30 )))
+ pulseWidth2 =  1500 ;
 
 
  duty_cycle1 = map(pulseWidth1, 1100 , 1900 , -255 , 255 );
  duty_cycle2 = map(pulseWidth2, 1100 , 1900 , -255 , 255 );
 
+
+ if(duty_cycle1 && last_duty_cycle1) {
+ unsigned long start = micros();
+ while(micros() - start <  1900 ){}
+ }
+ last_duty_cycle1 = duty_cycle1;
+
+ if(duty_cycle2 && last_duty_cycle2) {
+ long start = micros();
+ while(micros() - start <  1900 ){}
+ }
+ last_duty_cycle2 = duty_cycle1;
+
  if(duty_cycle1 >= 0){
- pwm_steering(1,2);
+ pwm_steering(1,1);
  set_duty_cycle(1,duty_cycle1);
  }
  else{
  duty_cycle1 = -duty_cycle1;
- pwm_steering(1,1);
+ pwm_steering(1,2);
  set_duty_cycle(1,duty_cycle1);
  }
 
  if(duty_cycle2 >= 0){
- pwm_steering(2,2);
+ pwm_steering(2,1);
  set_duty_cycle(2,duty_cycle2);
  }
  else{
  duty_cycle2 = -duty_cycle2;
- pwm_steering(2,1);
+ pwm_steering(2,2);
  set_duty_cycle(2,duty_cycle2);
  }
 }
-
-void rotateMotor1(unsigned long long pulseWidth){
- unsigned int dc;
- dc = (pulseWidth-1000);
- if(pulseWidth >= 1500){
- dc = (dc - 500);
- dc = dc*255/500;
- pwm_steering(1,1);
- set_duty_cycle(1,dc);
- }
- if(pulseWidth < 1500){
- dc = (500 - dc);
- dc = dc*255/500;
- pwm_steering(1,2);
- set_duty_cycle(1,dc);
- }
-
-}
-
-
-
-
-
+#line 314 "C:/Users/Samsung/Desktop/MinervaBots/Projetos/Controlador/Controlador 2017.2/Controlador 5A/Projeto de software/Controlador5A/Controlador5A.c"
 void interrupt()
 {
  if(TMR1IF_bit)
@@ -458,6 +458,6 @@ void main() {
  else {
  rotateMotor();
  }
-#line 551 "C:/Users/Samsung/Desktop/MinervaBots/Projetos/Controlador/Controlador 2017.2/Controlador 5A/Projeto de software/Controlador5A-master/Controlador5A-master/Controlador5A.c"
+#line 573 "C:/Users/Samsung/Desktop/MinervaBots/Projetos/Controlador/Controlador 2017.2/Controlador 5A/Projeto de software/Controlador5A/Controlador5A.c"
  }
 }

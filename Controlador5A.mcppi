@@ -33,10 +33,11 @@ Count=0
 [OTHER_FILES]
 Count=0
 [SEARCH_PATH]
-Count=3
+Count=4
 Path0=C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for PIC\Defs\
 Path1=C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for PIC\Uses\P16_Enh\
-Path2=C:\Users\Samsung\Desktop\MinervaBots\Projetos\Controlador\Controlador 2017.2\Controlador 5A\Projeto de software\Controlador5A-master\Controlador5A-master\
+Path2=C:\Users\Samsung\Desktop\MinervaBots\Projetos\Controlador\Controlador 2017.2\Controlador 5A\Projeto de software\Controlador5A\
+Path3=C:\Users\Samsung\Desktop\MinervaBots\Projetos\Controlador\Controlador 2017.2\Controlador 5A\Projeto de software\Controlador5A-master\Controlador5A-master\
 [HEADER_PATH]
 Count=0
 [HEADERS]
