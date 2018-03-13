@@ -1,5 +1,12 @@
-#line 1 "C:/Users/Samsung/Desktop/MinervaBots/Projetos/Controlador/Controlador 2017.2/Controlador 5A/Projeto de software/Controlador5A-master/Controlador5A-master/Controlador5A.c"
-#line 30 "C:/Users/Samsung/Desktop/MinervaBots/Projetos/Controlador/Controlador 2017.2/Controlador 5A/Projeto de software/Controlador5A-master/Controlador5A-master/Controlador5A.c"
+#line 1 "D:/GitHub/Controlador5A/Controlador5A.c"
+#line 1 "d:/github/controlador5a/constants.h"
+#line 1 "d:/github/controlador5a/setupfunctions.h"
+
+void setup_port();
+void setup_UART();
+void setup_pwms();
+void setup_Timer_1();
+#line 5 "D:/GitHub/Controlador5A/Controlador5A.c"
  unsigned long t1_sig1;
  unsigned long t2_sig1;
  unsigned long t1_sig2;
@@ -8,41 +15,6 @@
  unsigned int n_interrupts_timer1 = 0;
  unsigned short lower_8bits;
  unsigned short upper_8bits;
-
-void setup_pwms(){
- T2CON = 0;
- PR2 = 255;
-
-
- CCPTMRS.B1 = 0;
- CCPTMRS.B0 = 0;
-
-
- PSTR1CON.B0 = 1;
- PSTR1CON.B1 = 1;
- PSTR1CON.B2 = 0;
- PSTR1CON.B3 = 0;
- PSTR1CON.B4 = 1;
- CCPR1L = 0b11111111;
- CCP1CON = 0b00111100;
-#line 68 "C:/Users/Samsung/Desktop/MinervaBots/Projetos/Controlador/Controlador 2017.2/Controlador 5A/Projeto de software/Controlador5A-master/Controlador5A-master/Controlador5A.c"
- CCPTMRS.B3 = 0;
- CCPTMRS.B2 = 0;
-
-
- PSTR2CON.B0 = 1;
- PSTR2CON.B1 = 1;
- PSTR2CON.B2 = 0;
- PSTR2CON.B3 = 0;
- PSTR2CON.B4 = 1;
- CCPR2L = 0b11111111;
- CCP2CON = 0b00111100;
- T2CON = 0b00000100;
-
-
-
-
-}
 
 void set_duty_cycle(unsigned int channel, unsigned int duty ){
  if(channel == 1)
@@ -79,70 +51,9 @@ void pwm_steering(unsigned int channel,unsigned int port){
 }
 
 
-void setup_Timer_1(){
-
- T1CKPS1_bit = 0x00;
- T1CKPS0_bit = 0x01;
- TMR1CS1_bit = 0x00;
- TMR1CS0_bit = 0x00;
- TMR1ON_bit = 0x01;
- TMR1IE_bit = 0x01;
- TMR1L = 0x00;
- TMR1H = 0x00;
-
-
-
-}
 unsigned long long micros(){
  return (TMR1H <<8 | TMR1L)*  1 
  + n_interrupts_timer1* 65536 ;
-}
-void setup_port(){
-
- CM1CON0 = 0;
- CM2CON0 = 0;
-
-
- RXDTSEL_bit = 1;
- TXCKSEL_bit = 1;
- UART1_Init(9600);
- Delay_ms(100);
-
-
- P2BSEL_bit = 1;
- CCP2SEL_bit = 1;
-
- ANSELA = 0;
- ANSELC = 0x01;
- ADC_Init();
-
-
-
-
- TRISA1_bit = 0;
- TRISA2_bit = 1;
- TRISA3_bit = 1;
- TRISA4_bit = 0;
- TRISA5_bit = 0;
-
-
-
- TRISC0_bit = 1;
- TRISC1_bit = 1;
- TRISC2_bit = 1;
- TRISC3_bit = 1;
- TRISC4_bit = 0;
- TRISC5_bit = 0;
-
-
-
- GIE_bit = 0X01;
- PEIE_bit = 0X01;
- CCP3IE_bit = 0x01;
- CCP4IE_bit = 0x01;
- CCP3CON = 0x05;
- CCP4CON = 0x05;
-
 }
 
 unsigned failSafeCheck(){
@@ -299,9 +210,9 @@ void error_led_blink(unsigned time_ms){
  int i;
  time_ms = time_ms/250;
  for(i=0; i< time_ms; i++){
-  RA1_bit  = 1;
+  RA0_bit  = 1;
  delay_ms(200);
-  RA1_bit  = 0;
+  RA0_bit  = 0;
  delay_ms(200);
  }
 }
@@ -318,7 +229,7 @@ void calibration(){
  signal1_H_value = 0;
  signal2_H_value = 0;
  time_control = micros();
-  RA1_bit  = 1;
+  RA0_bit  = 1;
 
  while((micros() - time_control) < 2000000){
  signal_T_value = (unsigned) t2_sig1;
@@ -349,7 +260,7 @@ void calibration(){
 
  error_led_blink(1600);
  time_control = micros();
-  RA1_bit  = 1;
+  RA0_bit  = 1;
  while((micros() - time_control) < 2000000){
  signal_T_value = (unsigned) t2_sig1;
  if(signal_T_value > signal1_H_value)
@@ -375,7 +286,7 @@ void calibration(){
  delay_ms(10);
 
  error_led_blink(1600);
-  RA1_bit  = 0;
+  RA0_bit  = 0;
 }
 
 void read_eeprom_signals_data(){
@@ -434,11 +345,12 @@ void main() {
  setup_port();
  setup_pwms();
  setup_Timer_1();
- UART1_Write_Text("Start");
+
+
  pwm_steering(1,2);
  pwm_steering(2,2);
  set_duty_cycle(1, 0);
- set_duty_cycle(2, 255);
+ set_duty_cycle(2, 0);
  delay_ms(1000);
  t2_sig2 = 20000;
  t2_sig1 = 20000;
@@ -450,14 +362,17 @@ void main() {
  unsigned int i;
  unsigned adc_value;
  unsigned adc_value2;
-
- if (failSafeCheck()) {
- set_duty_cycle(1, 0);
- set_duty_cycle(2, 0);
+ if(! RA3_bit ){
+ delay_ms(1000);
+  RA1_bit  = 1;
+  RA0_bit  = 0;
+ delay_ms(1000);
+  RA1_bit  = 0;
+  RA0_bit  = 1;
  }
- else {
- rotateMotor();
+ else{
+  RA1_bit  = 0;
+  RA0_bit  = 0;
  }
-#line 551 "C:/Users/Samsung/Desktop/MinervaBots/Projetos/Controlador/Controlador 2017.2/Controlador 5A/Projeto de software/Controlador5A-master/Controlador5A-master/Controlador5A.c"
  }
 }

@@ -15,17 +15,23 @@ Value=0
 Value=2000
 [EEPROM_DEFINITION]
 Value=
+[EXPANDED_NODES]
+Count=0
 [FILES]
-Count=1
+Count=2
 File0=Controlador5A.c
+File1=setupFunctions.c
 [BINARIES]
 Count=0
 [IMAGES]
 Count=0
 ActiveImageIndex=-1
 [OPENED_FILES]
-Count=1
+Count=4
 File0=Controlador5A.c
+File1=constants.h
+File2=setupFunctions.c
+File3=setupFunctions.h
 [EEPROM]
 Count=0
 [ACTIVE_COMMENTS_FILES]
@@ -33,14 +39,20 @@ Count=0
 [OTHER_FILES]
 Count=0
 [SEARCH_PATH]
-Count=3
-Path0=C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for PIC\Defs\
-Path1=C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for PIC\Uses\P16_Enh\
-Path2=C:\Users\Samsung\Desktop\MinervaBots\Projetos\Controlador\Controlador 2017.2\Controlador 5A\Projeto de software\Controlador5A-master\Controlador5A-master\
+Count=6
+Path0=D:\Program Files\mikroC PRO for PIC\defs\
+Path1=D:\Program Files\mikroC PRO for PIC\Uses\P16_Enh\
+Path2=D:\GitHub\Controlador5A\
+Path3=C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for PIC\Defs\
+Path4=C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for PIC\Uses\P16_Enh\
+Path5=C:\Users\Samsung\Desktop\MinervaBots\Projetos\Controlador\Controlador 2017.2\Controlador 5A\Projeto de software\Controlador5A-master\Controlador5A-master\
 [HEADER_PATH]
-Count=0
+Count=1
+Path0=D:\GitHub\Controlador5A\
 [HEADERS]
-Count=0
+Count=2
+File0=constants.h
+File1=setupFunctions.h
 [PLDS]
 Count=0
 [Useses]
@@ -82,5 +94,7 @@ File33=Sprintl
 File34=Time
 File35=Trigonometry
 File36=UART
-[EXPANDED_NODES]
-Count=0
+[EXPANDED NODES]
+Node1=Sources
+Node2=Header Files
+Count=2
