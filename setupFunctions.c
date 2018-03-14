@@ -115,3 +115,9 @@ void setup_Timer_1(){
      //T_MAX/PERIODO_SINAL = 3.27
      //A cada final de medicao, o timer e resetado para nao haver problemas de overflow
 }
+
+void setup_Timer_6(){ // timer responsavel pela função millis()
+   PR6 = 249;         // limita o timer até 250 para totalizar um periodo de 8ms antes do overflow
+   T6CON = 0b0000111; //Liga o Timer 6 com a configuracao de Prescaler i1:64 , fazendo 32us cada incremento
+   TMR6IE_bit = 0b01; //Habilita interrupcoes por overflow do TMR6
+}

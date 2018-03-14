@@ -7,32 +7,31 @@
   unsigned int sig1_width = 1500;           //tempo da subida do sinal 1
   unsigned int sig2_width = 1500;           //tempo da descida do sinal 2
   unsigned long last_measure;               //tempo da ultima medida de sinal
-  unsigned int n_interrupts_timer1 = 0;     //variavel que armazena o numero de estouros do timer1
+  unsigned int n_interrupts_timer6 = 0;     //variavel que armazena o numero de estouros do timer16
   unsigned short  lower_8bits;              //variaveis utilizadas para armazenamento de uma variavel 16bits
   unsigned short  upper_8bits;              //em dois enderecos de memoria 8 bits
 
-unsigned long long micros(){
-     return  (TMR1H <<8 | TMR1L)* TIMER1_CONST     //cada bit do timer 1 vale 1us
-             + n_interrupts_timer1*OVERFLOW_CONST; //numero de interrupcoes vezes o valor maximo do Timer 1 (2^16)
+unsigned long long millis(){
+    return  TMR6*TIMER6_CONST + n_interrupts_timer6*OVERFLOW_TMR6_CONST;
 }
 
 unsigned failSafeCheck(){ //confere se ainda esta recebendo sinal
-  if((micros() - last_measure) > FAIL_SAFE_TIME )//compara o tempo do ultimo sinal recebido
+  if((millis() - last_measure) > FAIL_SAFE_TIME )//compara o tempo do ultimo sinal recebido
     return 1;
   return 0;
 }
 
 // --- Rotina de Interrupcaoo ---
-// Temos 2 tipos de interrupcao, um pelo estouro do Timer1 e outra pelo modulo Capture
-// Estouro do timer 1: Usamos para compor a funcao micros, nada mais eh que uma contagem de tempo
+// Temos 2 tipos de interrupcao, um pelo estouro do Timer6 e outra pelo modulo Capture
+// Estouro do timer 6: Usamos para compor a funcao millis, nada mais eh que uma contagem de tempo
 // Capture: Usamos para detectar as bordas de subida e descida e assim calcular a largura do pulso.
 void interrupt()
 {
-   /*if(TMR1IF_bit)            //interrupcao pelo estouro do Timer1
+   if(TMR6IF_bit)            //interrupcao pelo estouro do Timer6
   {
-    TMR1IF_bit = 0;          //Limpa a flag de interrupcao
-    n_interrupts_timer1++;   //incrementa a flag do overflow do timer1
-  }*/
+    TMR6IF_bit = 0;          //Limpa a flag de interrupcao
+    n_interrupts_timer6++;   //incrementa a flag do overflow do timer6
+  }
   
    if(CCP3IF_bit && CCP3CON.B0)            //Interrupcao do modulo CCP3 e modo de captura configurado para borda de subida?
   {                                        //Sim...
@@ -97,10 +96,10 @@ void calibration(){
    signal2_L_value = 20000;                    //Tempo maximo, frequencia = 50 ... T=20ms
    signal1_H_value = 0;                        //Tempo minimo
    signal2_H_value = 0;                        //Tempo minimo
-   time_control = micros();                    //controla o tempo de captura
+   time_control = millis();                    //controla o tempo de captura
    ERROR_LED = 1;                              //indica a captura do pulso
    
-   while((micros() - time_control) < 2000000){
+   while((millis() - time_control) < 2000){ // 2 segundos
         signal_T_value = (unsigned) sig1_width;   //valor da largura do pulso do canal1
         if(signal_T_value < signal1_L_value)
                   signal1_L_value = signal_T_value;
@@ -128,9 +127,9 @@ void calibration(){
    delay_ms(10);
 
    error_led_blink(1600);                      //indica a captura do valor minimo
-   time_control = micros();                    //controla o tempo de captura
+   time_control = millis();                    //controla o tempo de captura
    ERROR_LED = 1;                              //indica a captura do pulso
-   while((micros() - time_control) < 2000000){
+   while((millis() - time_control) < 2000){    // 2 segundos
         signal_T_value = (unsigned) sig1_width;   //valor da largura do pulso do canal1
         if(signal_T_value > signal1_H_value)
                   signal1_H_value = signal_T_value;
@@ -213,6 +212,7 @@ void main() {
    setup_port();
    setup_pwms();
    setup_Timer_1();
+   setup_Timer_6();
    setup_UART();
    UART1_Write_Text("Start");
    pwm_steering(1,2);
@@ -222,11 +222,20 @@ void main() {
    delay_ms(1000);
    //calibration();
    while(1){
+       char buffer[11];
+       unsigned long t1,t2;
        unsigned long pulsew1,pulsew2;
        pulsew1 = sig1_width;
        pulsew2 = sig2_width;
        print_signal_received(pulsew1,pulsew2);
-       rotateMotors(pulsew1,pulsew2);
-       //delay_ms(80);
+       //rotateMotors(pulsew1,pulsew2);
+
+       t1 = millis();
+       delay_ms(100);
+       t2 = millis() - t1;
+       UART1_write_text("Delta t: ");
+       IntToStr(t2, buffer);
+       UART1_write_text(buffer);
+       UART1_write_text("\n");
     }
 }

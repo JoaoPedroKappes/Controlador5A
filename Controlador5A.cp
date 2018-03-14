@@ -6,6 +6,7 @@ void setup_port();
 void setup_UART();
 void setup_pwms();
 void setup_Timer_1();
+void setup_Timer_6();
 #line 1 "d:/github/controlador5a/motorspwm.h"
 
 void set_duty_cycle(unsigned int, unsigned int);
@@ -21,17 +22,16 @@ unsigned int timeDifference(TimeMeasure , TimeMeasure );
  unsigned int sig1_width = 1500;
  unsigned int sig2_width = 1500;
  unsigned long last_measure;
- unsigned int n_interrupts_timer1 = 0;
+ unsigned int n_interrupts_timer6 = 0;
  unsigned short lower_8bits;
  unsigned short upper_8bits;
 
-unsigned long long micros(){
- return (TMR1H <<8 | TMR1L)*  1 
- + n_interrupts_timer1* 65536 ;
+unsigned long long millis(){
+ return TMR6* 0.032  + n_interrupts_timer6* 8 ;
 }
 
 unsigned failSafeCheck(){
- if((micros() - last_measure) >  100* 20000  )
+ if((millis() - last_measure) >  500  )
  return 1;
  return 0;
 }
@@ -42,7 +42,12 @@ unsigned failSafeCheck(){
 
 void interrupt()
 {
-#line 37 "D:/GitHub/Controlador5A/Controlador5A.c"
+ if(TMR6IF_bit)
+ {
+ TMR6IF_bit = 0;
+ n_interrupts_timer6++;
+ }
+
  if(CCP3IF_bit && CCP3CON.B0)
  {
  CCP3IF_bit = 0x00;
@@ -106,10 +111,10 @@ void calibration(){
  signal2_L_value = 20000;
  signal1_H_value = 0;
  signal2_H_value = 0;
- time_control = micros();
+ time_control = millis();
   RA0_bit  = 1;
 
- while((micros() - time_control) < 2000000){
+ while((millis() - time_control) < 2000){
  signal_T_value = (unsigned) sig1_width;
  if(signal_T_value < signal1_L_value)
  signal1_L_value = signal_T_value;
@@ -137,9 +142,9 @@ void calibration(){
  delay_ms(10);
 
  error_led_blink(1600);
- time_control = micros();
+ time_control = millis();
   RA0_bit  = 1;
- while((micros() - time_control) < 2000000){
+ while((millis() - time_control) < 2000){
  signal_T_value = (unsigned) sig1_width;
  if(signal_T_value > signal1_H_value)
  signal1_H_value = signal_T_value;
@@ -222,6 +227,7 @@ void main() {
  setup_port();
  setup_pwms();
  setup_Timer_1();
+ setup_Timer_6();
  setup_UART();
  UART1_Write_Text("Start");
  pwm_steering(1,2);
@@ -231,11 +237,20 @@ void main() {
  delay_ms(1000);
 
  while(1){
+ char buffer[11];
+ unsigned long t1,t2;
  unsigned long pulsew1,pulsew2;
  pulsew1 = sig1_width;
  pulsew2 = sig2_width;
  print_signal_received(pulsew1,pulsew2);
- rotateMotors(pulsew1,pulsew2);
 
+
+ t1 = millis();
+ delay_ms(100);
+ t2 = millis() - t1;
+ UART1_write_text("Delta t: ");
+ IntToStr(t2, buffer);
+ UART1_write_text(buffer);
+ UART1_write_text("\n");
  }
 }

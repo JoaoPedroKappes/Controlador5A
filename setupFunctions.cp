@@ -104,3 +104,9 @@ void setup_Timer_1(){
 
 
 }
+
+void setup_Timer_6(){
+ PR6 = 249;
+ T6CON = 0b0000111;
+ TMR6IE_bit = 0b01;
+}

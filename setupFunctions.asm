@@ -172,3 +172,19 @@ _setup_Timer_1:
 L_end_setup_Timer_1:
 	RETURN
 ; end of _setup_Timer_1
+
+_setup_Timer_6:
+
+;setupFunctions.c,119 :: 		void setup_Timer_6(){ // timer responsavel pela função millis()
+;setupFunctions.c,120 :: 		PR6 = 249;         // limita o timer até 250 para totalizar um periodo de 8ms antes do overflow
+	MOVLW      249
+	MOVWF      PR6+0
+;setupFunctions.c,121 :: 		T6CON = 0b0000111; //Liga o Timer 6 com a configuracao de Prescaler i1:64 , fazendo 32us cada incremento
+	MOVLW      7
+	MOVWF      T6CON+0
+;setupFunctions.c,122 :: 		TMR6IE_bit = 0b01; //Habilita interrupcoes por overflow do TMR6
+	BSF        TMR6IE_bit+0, 3
+;setupFunctions.c,123 :: 		}
+L_end_setup_Timer_6:
+	RETURN
+; end of _setup_Timer_6

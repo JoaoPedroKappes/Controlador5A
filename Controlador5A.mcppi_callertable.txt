@@ -4,6 +4,7 @@ main
 		ADC_Init
 	setup_pwms
 	setup_Timer_1
+	setup_Timer_6
 	setup_UART
 		UART1_Init
 	UART1_Write_Text
@@ -16,12 +17,36 @@ main
 		IntToStr
 			WordToStr
 				Div_16x16_U
-	rotateMotors
-		map
-			Mul_32x32_U
-			Div_32x32_S
-				SDIV3232L
-				COMFREM
-		pwm_steering
-		set_duty_cycle
+	millis
+		Byte2Double
+			NRM4032
+				RES032
+				SETFUN32
+				FIXSIGN32
+				SETFOV32
+		Mul_32x32_FP
+			RES032
+			SETFOV32
+			SETFUN32
+		Word2Double
+			NRM3232
+				RES032
+				SETFUN32
+				FIXSIGN32
+		Add_32x32_FP
+			NRM4032
+				RES032
+				SETFUN32
+				FIXSIGN32
+				SETFOV32
+			NRM3232
+				RES032
+				SETFUN32
+				FIXSIGN32
+			SETFOV32
+		Double2Longword
+			SETIOV3224
+	IntToStr
+		WordToStr
+			Div_16x16_U
 interrupt

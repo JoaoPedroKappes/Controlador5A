@@ -908,8 +908,7 @@ memmove
 memset
 mfiofr
 mfiofr_bit
-micros
-microst
+millis
 min
 mm_error_
 mm_freememtable
@@ -926,7 +925,7 @@ mul_32x32_s
 mul_32x32_u
 mul_8x8_s
 mul_8x8_u
-n_interrupts_timer1
+n_interrupts_timer6
 not_bor
 not_bor_bit
 not_pd
@@ -1185,6 +1184,7 @@ setiov3224
 setup_port
 setup_pwms
 setup_timer_1
+setup_timer_6
 setup_uart
 shorttohex
 shorttostr
@@ -1587,7 +1587,6 @@ tanh
 time_datetoepoch
 time_epochtodate
 time_jd1970
-timedifference
 tmr0
 tmr0cs
 tmr0cs_bit

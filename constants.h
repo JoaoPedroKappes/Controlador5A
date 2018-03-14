@@ -1,12 +1,13 @@
 /*** All the constants for the Main Function ***/
 
-#define TIMER1_CONST      1 //cada bit do timer 1 vale 1us
-#define OVERFLOW_CONST    65536
+  // TIMERS CONSTANTS
+#define TIMER6_CONST      0.032 //cada bit do timer 6 vale 32us = 0.032ms
+#define OVERFLOW_TMR6_CONST 8   //cada overflow significa 8 ms
 
  // Signal Constants
 #define SIGNAL_PERIOD     20000   //20ms
 #define SIGNAL_PERIOD_OFFSET 1000/SIGNAL_PERIOD; // 1ms/20ms
-#define FAIL_SAFE_TIME   100*SIGNAL_PERIOD
+#define FAIL_SAFE_TIME    500   // 500 ms
 #define MAX_CH_DURATION   1900
 #define MIN_CH_DURATION   1100
 #define MAX_PWM           255
