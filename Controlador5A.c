@@ -1,6 +1,7 @@
 #include "constants.h"
 #include "setupFunctions.h"
 #include "motorsPWM.h"
+#include "timeMeasure.h"
 
  // --- Variaveis Globais ---
   unsigned long t1_sig1;           //tempo da subida do sinal 1
@@ -262,6 +263,12 @@ void main() {
    t2_sig1 = 15000;
    //calibration();
    while(1){
-       rotateMotors(t2_sig1,t2_sig2);
+       //rotateMotors(t2_sig1,t2_sig2);
+       pwm_steering(2,2);
+       set_duty_cycle(2, 0);
+       delay_ms(1000);
+       pwm_steering(2,2);
+       set_duty_cycle(2, 150);
+       delay_ms(2000);
     }
 }

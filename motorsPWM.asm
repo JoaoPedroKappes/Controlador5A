@@ -497,14 +497,10 @@ L__rotateMotors45:
 	MOVF       rotateMotors_duty_cycle2_L0+1, 0
 	MOVWF      FARG_set_duty_cycle_duty+1
 	CALL       _set_duty_cycle+0
-;motorsPWM.c,83 :: 		CALIB_LED = 1;
-	BSF        RA1_bit+0, 1
-;motorsPWM.c,84 :: 		ERROR_LED = 0;
-	BCF        RA0_bit+0, 0
-;motorsPWM.c,85 :: 		}
+;motorsPWM.c,83 :: 		}
 	GOTO       L_rotateMotors21
 L_rotateMotors20:
-;motorsPWM.c,87 :: 		duty_cycle2 = -duty_cycle2;
+;motorsPWM.c,85 :: 		duty_cycle2 = -duty_cycle2;
 	MOVF       rotateMotors_duty_cycle2_L0+0, 0
 	SUBLW      0
 	MOVWF      rotateMotors_duty_cycle2_L0+0
@@ -513,7 +509,7 @@ L_rotateMotors20:
 	ADDLW      1
 	CLRF       rotateMotors_duty_cycle2_L0+1
 	SUBWF      rotateMotors_duty_cycle2_L0+1, 1
-;motorsPWM.c,88 :: 		pwm_steering(2,1);                       //coloca no sentido horario de rotacao
+;motorsPWM.c,86 :: 		pwm_steering(2,1);                       //coloca no sentido horario de rotacao
 	MOVLW      2
 	MOVWF      FARG_pwm_steering_channel+0
 	MOVLW      0
@@ -523,7 +519,7 @@ L_rotateMotors20:
 	MOVLW      0
 	MOVWF      FARG_pwm_steering_port+1
 	CALL       _pwm_steering+0
-;motorsPWM.c,89 :: 		set_duty_cycle(2,duty_cycle2);            //aplica o duty cycle
+;motorsPWM.c,87 :: 		set_duty_cycle(2,duty_cycle2);            //aplica o duty cycle
 	MOVLW      2
 	MOVWF      FARG_set_duty_cycle_channel+0
 	MOVLW      0
@@ -533,13 +529,9 @@ L_rotateMotors20:
 	MOVF       rotateMotors_duty_cycle2_L0+1, 0
 	MOVWF      FARG_set_duty_cycle_duty+1
 	CALL       _set_duty_cycle+0
-;motorsPWM.c,90 :: 		CALIB_LED = 0;
-	BCF        RA1_bit+0, 1
-;motorsPWM.c,91 :: 		ERROR_LED = 1;
-	BSF        RA0_bit+0, 0
-;motorsPWM.c,92 :: 		}
+;motorsPWM.c,88 :: 		}
 L_rotateMotors21:
-;motorsPWM.c,93 :: 		}
+;motorsPWM.c,89 :: 		}
 L_end_rotateMotors:
 	RETURN
 ; end of _rotateMotors

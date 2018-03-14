@@ -80,14 +80,10 @@ void rotateMotors(unsigned int pulseWidth1,unsigned int pulseWidth2){
  if(duty_cycle2 >= 0){
  pwm_steering(2,2);
  set_duty_cycle(2,duty_cycle2);
-  RA1_bit  = 1;
-  RA0_bit  = 0;
  }
  else{
  duty_cycle2 = -duty_cycle2;
  pwm_steering(2,1);
  set_duty_cycle(2,duty_cycle2);
-  RA1_bit  = 0;
-  RA0_bit  = 1;
  }
 }

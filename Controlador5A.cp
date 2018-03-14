@@ -12,7 +12,12 @@ void set_duty_cycle(unsigned int, unsigned int);
 void pwm_steering(unsigned int,unsigned int);
 long map(long, long , long, long, long );
 void rotateMotors(unsigned int, unsigned int);
-#line 6 "D:/GitHub/Controlador5A/Controlador5A.c"
+#line 1 "d:/github/controlador5a/timemeasure.h"
+
+typedef struct timeMeasure {unsigned int n_overflows, time_reg;} TimeMeasure;
+TimeMeasure microsT(unsigned int);
+unsigned int timeDifference(TimeMeasure , TimeMeasure );
+#line 7 "D:/GitHub/Controlador5A/Controlador5A.c"
  unsigned long t1_sig1;
  unsigned long t2_sig1;
  unsigned long t1_sig2;
@@ -272,6 +277,12 @@ void main() {
  t2_sig1 = 15000;
 
  while(1){
- rotateMotors(t2_sig1,t2_sig2);
+
+ pwm_steering(2,2);
+ set_duty_cycle(2, 0);
+ delay_ms(1000);
+ pwm_steering(2,2);
+ set_duty_cycle(2, 150);
+ delay_ms(2000);
  }
 }

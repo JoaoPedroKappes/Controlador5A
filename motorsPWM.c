@@ -80,14 +80,10 @@ void rotateMotors(unsigned int pulseWidth1,unsigned int pulseWidth2){
     if(duty_cycle2 >= 0){
       pwm_steering(2,2);                        //coloca no sentido anti horario de rotacao
       set_duty_cycle(2,duty_cycle2);                     //aplica o duty cycle
-      CALIB_LED = 1;
-      ERROR_LED = 0;
     }
     else{
       duty_cycle2 = -duty_cycle2;
       pwm_steering(2,1);                       //coloca no sentido horario de rotacao
       set_duty_cycle(2,duty_cycle2);            //aplica o duty cycle
-      CALIB_LED = 0;
-      ERROR_LED = 1;
     }
 }
