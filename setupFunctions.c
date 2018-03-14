@@ -1,4 +1,4 @@
-
+/*** Setup Functions ***/
 
 void setup_port(){
      //Desabilita comparadores internos
@@ -112,4 +112,3 @@ void setup_Timer_1(){
      //T_MAX/PERIODO_SINAL = 3.27
      //A cada final de medicao, o timer e resetado para nao haver problemas de overflow
 }
-
