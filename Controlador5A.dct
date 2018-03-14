@@ -1062,7 +1062,6 @@ pss2bd1
 pss2bd1_bit
 pstr1con
 pstr2con
-pulsein1
 pwm_steering
 pwm1_init
 pwm1_set_duty
@@ -1139,7 +1138,6 @@ rd
 rd_bit
 read_eeprom_signals_data
 res032
-rotatemotor1
 rotatemotors
 rs485master_init
 rs485master_receive
@@ -1190,6 +1188,8 @@ setup_timer_1
 setup_uart
 shorttohex
 shorttostr
+sig1_width
+sig2_width
 sin
 sine3
 sinh
@@ -1517,8 +1517,6 @@ t0se
 t0se_bit
 t0xcs
 t0xcs_bit
-t1_sig1
-t1_sig2
 t1ckps0
 t1ckps0_bit
 t1ckps1
@@ -1545,8 +1543,6 @@ t1oscen
 t1oscen_bit
 t1oscr
 t1oscr_bit
-t2_sig1
-t2_sig2
 t2ckps0
 t2ckps0_bit
 t2ckps1

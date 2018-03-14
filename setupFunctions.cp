@@ -3,6 +3,9 @@
 
 void setup_port(){
 
+ OSCCON = 0b01110010;
+
+
  CM1CON0 = 0;
  CM2CON0 = 0;
 
@@ -37,7 +40,7 @@ void setup_port(){
 
  GIE_bit = 0X01;
  PEIE_bit = 0X01;
- CCP3IE_bit = 0x01;
+
  CCP4IE_bit = 0x01;
  CCP3CON = 0x05;
  CCP4CON = 0x05;
@@ -60,7 +63,7 @@ void setup_pwms(){
  PSTR1CON.B4 = 0;
  CCPR1L = 0b11111111;
  CCP1CON = 0b00111100;
-#line 75 "D:/GitHub/Controlador5A/setupFunctions.c"
+#line 78 "D:/GitHub/Controlador5A/setupFunctions.c"
  CCPTMRS.B3 = 0;
  CCPTMRS.B2 = 0;
 
@@ -94,7 +97,7 @@ void setup_Timer_1(){
  TMR1CS1_bit = 0x00;
  TMR1CS0_bit = 0x00;
  TMR1ON_bit = 0x01;
- TMR1IE_bit = 0x01;
+
  TMR1L = 0x00;
  TMR1H = 0x00;
 

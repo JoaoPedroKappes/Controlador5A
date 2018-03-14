@@ -1,6 +1,9 @@
 /*** Setup Functions ***/
 
 void setup_port(){
+     //Coloca o oscillador interno a 8Mz. NAO APAGAR ESSA LINHA
+     OSCCON = 0b01110010;
+     
      //Desabilita comparadores internos
      CM1CON0       = 0;
      CM2CON0       = 0;
@@ -16,7 +19,7 @@ void setup_port(){
 
      //PINOS:
      /*** PORTA ***/
-     TRISA0_bit = 0; //TX(UART) Nao precisamos setar pois a funcao de UART ja o faz
+     TRISA0_bit = 0; //TX(UART)/PGD Nao precisamos setar pois a funcao de UART ja o faz
      TRISA1_bit = 0; //RX(UART) e LED_ERROR
      TRISA2_bit = 1; //RADIO INPUT1(CCP3)
      TRISA3_bit = 1; //MLCR e CALIB_BUTTON
@@ -36,7 +39,7 @@ void setup_port(){
      /*** Interrupcoes e Captura ***/
      GIE_bit    = 0X01;   //Habilita a interrupcao Global
      PEIE_bit   = 0X01;   //Habilita a interrupcao por perifericos
-     CCP3IE_bit  = 0x01;  //Habilita interrupcoes do modulo CCP3(RADIO INPUT1)
+     //CCP3IE_bit  = 0x01;  //Habilita interrupcoes do modulo CCP3(RADIO INPUT1)
      CCP4IE_bit  = 0x01;  //Habilita interrupcoes do modulo CCP4(RADIO INPUT2)
      CCP3CON     = 0x05;  //Configura captura por borda de subida
      CCP4CON     = 0x05;  //Configura captura por borda de subida
@@ -105,7 +108,7 @@ void setup_Timer_1(){
      TMR1CS1_bit = 0x00;                        //Clock: Fosc/4 = instruction clock
      TMR1CS0_bit = 0x00;                        //Clock: Fosc/4 = instruction clock
      TMR1ON_bit  = 0x01;                        //Inicia a contagem do Timer1
-     TMR1IE_bit  = 0x01;                        //Habilita interrupcoes de TMR1
+     //TMR1IE_bit  = 0x01;                        //Habilita interrupcoes de TMR1
      TMR1L       = 0x00;                        //zera o Timer1
      TMR1H       = 0x00;
      //T_MAX = 2^16*1us = 65.536ms

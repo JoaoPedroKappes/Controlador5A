@@ -4,14 +4,12 @@
 #include "timeMeasure.h"
 
  // --- Variaveis Globais ---
-  unsigned long t1_sig1;           //tempo da subida do sinal 1
-  unsigned long t2_sig1;           //tempo da descida do sinal 1
-  unsigned long t1_sig2;           //tempo da subida do sinal 2
-  unsigned long t2_sig2;           //tempo da descida do sinal 2
-  unsigned long last_measure;      //tempo da ultima medida de sinal
-  unsigned int n_interrupts_timer1 = 0;//variavel que armazena o numero de estouros do timer1
-  unsigned short  lower_8bits;     //variaveis utilizadas para armazenamento de uma variavel 16bits
-  unsigned short  upper_8bits;     //em dois enderecos de memoria 8 bits
+  unsigned int sig1_width = 1500;           //tempo da subida do sinal 1
+  unsigned int sig2_width = 1500;           //tempo da descida do sinal 2
+  unsigned long last_measure;               //tempo da ultima medida de sinal
+  unsigned int n_interrupts_timer1 = 0;     //variavel que armazena o numero de estouros do timer1
+  unsigned short  lower_8bits;              //variaveis utilizadas para armazenamento de uma variavel 16bits
+  unsigned short  upper_8bits;              //em dois enderecos de memoria 8 bits
 
 unsigned long long micros(){
      return  (TMR1H <<8 | TMR1L)* TIMER1_CONST     //cada bit do timer 1 vale 1us
@@ -24,74 +22,36 @@ unsigned failSafeCheck(){ //confere se ainda esta recebendo sinal
   return 0;
 }
 
-unsigned long long PulseIn1(){  //funcao que calculava, via software, o pulso recebido
- unsigned long long flag;
- flag = micros();
- while(RADIO_IN1){   //garante que nao pegamos o sinal na metade, espera o sinal acabar para medi-lo de novo
-   if((micros() - flag) > FAIL_SAFE_TIME) //flag de nao recebimento do sinal
-     return 0;
- }
- while(RADIO_IN1 == 0){   //espera o sinal
-   if((micros() - flag) > FAIL_SAFE_TIME) //flag de nao recebimento do sinal
-     return 0;
- }
- t1_sig1 = micros(); //mede o inicio do sinal
- while(RADIO_IN1){   //espera o sinal acabar
-   if((micros() - flag) > FAIL_SAFE_TIME)//flag de nao recebimento do sinal
-     return 0;
- }
- t1_sig1 = micros() - t1_sig1;//faz a diferenca entre as duas medidas de tempo
-
- return t1_sig1;
-}
-
-
-void rotateMotor1(unsigned long long pulseWidth){  // funcao ainda nao testada
-      unsigned int dc;                             //intuito de mapear 1000us a 2000ms em -100% a 100% de rotacao
-      dc = (pulseWidth-1000);
-      if(pulseWidth >= 1500){
-         dc = (dc - 500);
-         dc = dc*255/500;
-         pwm_steering(1,1);                        //coloca no sentido anti horario de rotacao
-         set_duty_cycle(1,dc);                     //aplica o duty cycle
-      }
-      if(pulseWidth < 1500){
-         dc = (500 - dc);
-         dc = dc*255/500;
-         pwm_steering(1,2);                       //coloca no sentido horario de rotacao
-         set_duty_cycle(1,dc);                    //aplica o duty cycle
-      }
-
-}
-
 // --- Rotina de Interrupcaoo ---
 // Temos 2 tipos de interrupcao, um pelo estouro do Timer1 e outra pelo modulo Capture
 // Estouro do timer 1: Usamos para compor a funcao micros, nada mais eh que uma contagem de tempo
 // Capture: Usamos para detectar as bordas de subida e descida e assim calcular a largura do pulso.
 void interrupt()
 {
-   if(TMR1IF_bit)            //interrupcao pelo estouro do Timer1
+   /*if(TMR1IF_bit)            //interrupcao pelo estouro do Timer1
   {
     TMR1IF_bit = 0;          //Limpa a flag de interrupcao
     n_interrupts_timer1++;   //incrementa a flag do overflow do timer1
-  }
+  }*/
   
    if(CCP3IF_bit && CCP3CON.B0)            //Interrupcao do modulo CCP3 e modo de captura configurado para borda de subida?
   {                                        //Sim...
     CCP3IF_bit  = 0x00;                    //Limpa a flag para nova captura
     CCP3IE_bit  = 0x00;                    //Desabilita interrupcao do periferico CCP
     CCP3CON     = 0x04;                    //Configura captura por borda de descida
-    t1_sig1     = micros();                //Guarda o valor do timer1 da primeira captura.
     CCP3IE_bit  = 0x01;                    //Habilita interrupcao do periferico CCP
+    TMR1L       = 0x00;                    //zera o Timer1
+    TMR1H       = 0x00;
+    TMR1ON_bit  = 0x01;                    //Inicia a contagem do Timer1
   } //end if
    else if(CCP3IF_bit)                     //Interrupcao do modulo CCP3?
   {                                        //Sim...
     CCP3IF_bit  = 0x00;                    //Limpa a flag para nova captura
+    TMR1ON_bit  = 0x00;                    //Interrompe a contagem do Timer1
     CCP3IE_bit  = 0x00;                    //Desabilita interrupcao do periferico CCP
     CCP3CON     = 0x05;                    //Configura captura por borda de subida
-    t2_sig1     = micros() - t1_sig1;      //Guarda o valor do timer1 da segunda captura.
-    CCP3IE_bit  = 0x01;                    //Habilita interrupcao do periferico CCP
-    last_measure = micros();               //guarda o tempo da ultima medida para o controle fail safe
+    sig1_width  = (TMR1H <<8 | TMR1L);     //Captura a largura do pulso do Sinal 1
+    CCP4IE_bit  = 0x01;                    //Habilita interrupcao do periferico CCP4 = RADIO_IN2
   } //end else
 
    if(CCP4IF_bit && CCP4CON.B0)            //Interrupcao do modulo CCP4 e modo de captura configurado para borda de subida?
@@ -99,17 +59,19 @@ void interrupt()
     CCP4IF_bit  = 0x00;                    //Limpa a flag para nova captura
     CCP4IE_bit  = 0x00;                    //Desabilita interrupcao do periferico CCP
     CCP4CON     = 0x04;                    //Configura captura por borda de descida
-    t1_sig2     = micros();                //Guarda o valor do timer1 da primeira captura.
     CCP4IE_bit  = 0x01;                    //Habilita interrupcao do periferico CCP
+    TMR1L       = 0x00;                    //zera o Timer1
+    TMR1H       = 0x00;
+    TMR1ON_bit  = 0x01;                    //Inicia a contagem do Timer1
   } //end if
    else if(CCP4IF_bit)                     //Interrupcao do modulo CCP4?
   {                                        //Sim...
     CCP4IF_bit  = 0x00;                    //Limpa a flag para nova captura
+    TMR1ON_bit  = 0x00;                    //Interrompe a contagem do Timer1
     CCP4IE_bit  = 0x00;                    //Desabilita interrupcao do periferico CCP
     CCP4CON     = 0x05;                    //Configura captura por borda de subida
-    t2_sig2     = micros() - t1_sig2;      //Guarda o valor do timer1 da segunda captura.
-    CCP4IE_bit  = 0x01;                    //Habilita interrupcao do periferico CCP
-    last_measure = micros();               //guarda o tempo da ultima medida para o controle fail safe
+    sig2_width  = (TMR1H <<8 | TMR1L);     //Captura a largura do pulso do Sinal 2
+    CCP3IE_bit  = 0x01;                    //Habilita interrupcao do periferico CCP3 = RADIO_IN1
   } //end else  */
 } //end interrupt
 
@@ -139,11 +101,11 @@ void calibration(){
    ERROR_LED = 1;                              //indica a captura do pulso
    
    while((micros() - time_control) < 2000000){
-        signal_T_value = (unsigned) t2_sig1;   //valor da largura do pulso do canal1
+        signal_T_value = (unsigned) sig1_width;   //valor da largura do pulso do canal1
         if(signal_T_value < signal1_L_value)
                   signal1_L_value = signal_T_value;
 
-        signal_T_value = (unsigned) t2_sig2;   //valor da largura do pulso do canal2
+        signal_T_value = (unsigned) sig2_width;   //valor da largura do pulso do canal2
         if(signal_T_value < signal2_L_value)
                   signal2_L_value = signal_T_value;
    }
@@ -169,11 +131,11 @@ void calibration(){
    time_control = micros();                    //controla o tempo de captura
    ERROR_LED = 1;                              //indica a captura do pulso
    while((micros() - time_control) < 2000000){
-        signal_T_value = (unsigned) t2_sig1;   //valor da largura do pulso do canal1
+        signal_T_value = (unsigned) sig1_width;   //valor da largura do pulso do canal1
         if(signal_T_value > signal1_H_value)
                   signal1_H_value = signal_T_value;
               
-        signal_T_value = (unsigned) t2_sig2;   //valor da largura do pulso do canal1
+        signal_T_value = (unsigned) sig2_width;   //valor da largura do pulso do canal1
         if(signal_T_value > signal2_H_value)
                   signal2_H_value = signal_T_value;
    }
@@ -231,16 +193,16 @@ void read_eeprom_signals_data(){
    delay_ms(10);
 }
 
-void print_signal_received(){
+void print_signal_received(unsigned sig1,unsigned sig2 ){
     char buffer[11];
     
     UART1_write_text("Sinal 1: ");
-    LongWordToStr(t2_sig1, buffer);
+    IntToStr(sig1, buffer);
     UART1_write_text(buffer);
     UART1_write_text("\t");
 
     UART1_write_text("Sinal 2: ");
-    LongWordToStr(t2_sig2, buffer);
+    IntToStr(sig2, buffer);
     UART1_write_text(buffer);
     UART1_write_text("\n");
     
@@ -248,27 +210,23 @@ void print_signal_received(){
 }
 
 void main() {
-   OSCCON = 0b01110010; //Coloca o oscillador interno a 8Mz. NAO APAGAR ESSA LINHA (talvez muda-la pra dentro do setup_port)
    setup_port();
    setup_pwms();
    setup_Timer_1();
-   //setup_UART();
-   //UART1_Write_Text("Start");
+   setup_UART();
+   UART1_Write_Text("Start");
    pwm_steering(1,2);
    pwm_steering(2,2);
    set_duty_cycle(1, 0);
    set_duty_cycle(2, 0);
    delay_ms(1000);
-   t2_sig2 = 15000;
-   t2_sig1 = 15000;
    //calibration();
    while(1){
-       //rotateMotors(t2_sig1,t2_sig2);
-       pwm_steering(2,2);
-       set_duty_cycle(2, 0);
-       delay_ms(1000);
-       pwm_steering(2,2);
-       set_duty_cycle(2, 150);
-       delay_ms(2000);
+       unsigned long pulsew1,pulsew2;
+       pulsew1 = sig1_width;
+       pulsew2 = sig2_width;
+       print_signal_received(pulsew1,pulsew2);
+       rotateMotors(pulsew1,pulsew2);
+       //delay_ms(80);
     }
 }

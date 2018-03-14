@@ -4,7 +4,24 @@ main
 		ADC_Init
 	setup_pwms
 	setup_Timer_1
+	setup_UART
+		UART1_Init
+	UART1_Write_Text
+		UART1_Write
 	pwm_steering
 	set_duty_cycle
+	print_signal_received
+		UART1_Write_Text
+			UART1_Write
+		IntToStr
+			WordToStr
+				Div_16x16_U
+	rotateMotors
+		map
+			Mul_32x32_U
+			Div_32x32_S
+				SDIV3232L
+				COMFREM
+		pwm_steering
+		set_duty_cycle
 interrupt
-	micros

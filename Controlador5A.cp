@@ -18,10 +18,8 @@ typedef struct timeMeasure {unsigned int n_overflows, time_reg;} TimeMeasure;
 TimeMeasure microsT(unsigned int);
 unsigned int timeDifference(TimeMeasure , TimeMeasure );
 #line 7 "D:/GitHub/Controlador5A/Controlador5A.c"
- unsigned long t1_sig1;
- unsigned long t2_sig1;
- unsigned long t1_sig2;
- unsigned long t2_sig2;
+ unsigned int sig1_width = 1500;
+ unsigned int sig2_width = 1500;
  unsigned long last_measure;
  unsigned int n_interrupts_timer1 = 0;
  unsigned short lower_8bits;
@@ -38,74 +36,31 @@ unsigned failSafeCheck(){
  return 0;
 }
 
-unsigned long long PulseIn1(){
- unsigned long long flag;
- flag = micros();
- while( RA2_bit ){
- if((micros() - flag) >  100* 20000 )
- return 0;
- }
- while( RA2_bit  == 0){
- if((micros() - flag) >  100* 20000 )
- return 0;
- }
- t1_sig1 = micros();
- while( RA2_bit ){
- if((micros() - flag) >  100* 20000 )
- return 0;
- }
- t1_sig1 = micros() - t1_sig1;
-
- return t1_sig1;
-}
-
-
-void rotateMotor1(unsigned long long pulseWidth){
- unsigned int dc;
- dc = (pulseWidth-1000);
- if(pulseWidth >= 1500){
- dc = (dc - 500);
- dc = dc*255/500;
- pwm_steering(1,1);
- set_duty_cycle(1,dc);
- }
- if(pulseWidth < 1500){
- dc = (500 - dc);
- dc = dc*255/500;
- pwm_steering(1,2);
- set_duty_cycle(1,dc);
- }
-
-}
-
 
 
 
 
 void interrupt()
 {
- if(TMR1IF_bit)
- {
- TMR1IF_bit = 0;
- n_interrupts_timer1++;
- }
-
+#line 37 "D:/GitHub/Controlador5A/Controlador5A.c"
  if(CCP3IF_bit && CCP3CON.B0)
  {
  CCP3IF_bit = 0x00;
  CCP3IE_bit = 0x00;
  CCP3CON = 0x04;
- t1_sig1 = micros();
  CCP3IE_bit = 0x01;
+ TMR1L = 0x00;
+ TMR1H = 0x00;
+ TMR1ON_bit = 0x01;
  }
  else if(CCP3IF_bit)
  {
  CCP3IF_bit = 0x00;
+ TMR1ON_bit = 0x00;
  CCP3IE_bit = 0x00;
  CCP3CON = 0x05;
- t2_sig1 = micros() - t1_sig1;
- CCP3IE_bit = 0x01;
- last_measure = micros();
+ sig1_width = (TMR1H <<8 | TMR1L);
+ CCP4IE_bit = 0x01;
  }
 
  if(CCP4IF_bit && CCP4CON.B0)
@@ -113,17 +68,19 @@ void interrupt()
  CCP4IF_bit = 0x00;
  CCP4IE_bit = 0x00;
  CCP4CON = 0x04;
- t1_sig2 = micros();
  CCP4IE_bit = 0x01;
+ TMR1L = 0x00;
+ TMR1H = 0x00;
+ TMR1ON_bit = 0x01;
  }
  else if(CCP4IF_bit)
  {
  CCP4IF_bit = 0x00;
+ TMR1ON_bit = 0x00;
  CCP4IE_bit = 0x00;
  CCP4CON = 0x05;
- t2_sig2 = micros() - t1_sig2;
- CCP4IE_bit = 0x01;
- last_measure = micros();
+ sig2_width = (TMR1H <<8 | TMR1L);
+ CCP3IE_bit = 0x01;
  }
 }
 
@@ -153,11 +110,11 @@ void calibration(){
   RA0_bit  = 1;
 
  while((micros() - time_control) < 2000000){
- signal_T_value = (unsigned) t2_sig1;
+ signal_T_value = (unsigned) sig1_width;
  if(signal_T_value < signal1_L_value)
  signal1_L_value = signal_T_value;
 
- signal_T_value = (unsigned) t2_sig2;
+ signal_T_value = (unsigned) sig2_width;
  if(signal_T_value < signal2_L_value)
  signal2_L_value = signal_T_value;
  }
@@ -183,11 +140,11 @@ void calibration(){
  time_control = micros();
   RA0_bit  = 1;
  while((micros() - time_control) < 2000000){
- signal_T_value = (unsigned) t2_sig1;
+ signal_T_value = (unsigned) sig1_width;
  if(signal_T_value > signal1_H_value)
  signal1_H_value = signal_T_value;
 
- signal_T_value = (unsigned) t2_sig2;
+ signal_T_value = (unsigned) sig2_width;
  if(signal_T_value > signal2_H_value)
  signal2_H_value = signal_T_value;
  }
@@ -245,16 +202,16 @@ void read_eeprom_signals_data(){
  delay_ms(10);
 }
 
-void print_signal_received(){
+void print_signal_received(unsigned sig1,unsigned sig2 ){
  char buffer[11];
 
  UART1_write_text("Sinal 1: ");
- LongWordToStr(t2_sig1, buffer);
+ IntToStr(sig1, buffer);
  UART1_write_text(buffer);
  UART1_write_text("\t");
 
  UART1_write_text("Sinal 2: ");
- LongWordToStr(t2_sig2, buffer);
+ IntToStr(sig2, buffer);
  UART1_write_text(buffer);
  UART1_write_text("\n");
 
@@ -262,27 +219,23 @@ void print_signal_received(){
 }
 
 void main() {
- OSCCON = 0b01110010;
  setup_port();
  setup_pwms();
  setup_Timer_1();
-
-
+ setup_UART();
+ UART1_Write_Text("Start");
  pwm_steering(1,2);
  pwm_steering(2,2);
  set_duty_cycle(1, 0);
  set_duty_cycle(2, 0);
  delay_ms(1000);
- t2_sig2 = 15000;
- t2_sig1 = 15000;
 
  while(1){
+ unsigned long pulsew1,pulsew2;
+ pulsew1 = sig1_width;
+ pulsew2 = sig2_width;
+ print_signal_received(pulsew1,pulsew2);
+ rotateMotors(pulsew1,pulsew2);
 
- pwm_steering(2,2);
- set_duty_cycle(2, 0);
- delay_ms(1000);
- pwm_steering(2,2);
- set_duty_cycle(2, 150);
- delay_ms(2000);
  }
 }
